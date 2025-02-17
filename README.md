@@ -1,4 +1,4 @@
-Frontend for ([Mujmua](https://mujmua.vercel.app/))
+Frontend for ([swoop parts](https://mujmua.vercel.app/))
 
 ## Installing
 
