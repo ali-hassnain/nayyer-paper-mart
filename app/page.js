@@ -13,13 +13,13 @@ export default async function Home() {
     start: 0,
     end: 7,
   };
-  const {
-    photos: initialMedia,
-    count: totalCount,
-    error,
-  } = await GET__getPhotos(initialMediaRange.start, initialMediaRange.end);
+  // const {
+  //   photos: initialMedia,
+  //   count: totalCount,
+  //   error,
+  // } = await GET__getPhotos(initialMediaRange.start, initialMediaRange.end);
 
-  console.log(totalCount);
+  // console.log(totalCount);
 
   return (
     <>

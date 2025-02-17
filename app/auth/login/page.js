@@ -26,6 +26,7 @@ const Login = () => {
   const [emailVerified, setEmailVerified] = useState(null);
 
   const supabase = createClient();
+  console.log("-> supabase", supabase);
 
   const onSubmit = async (formData) => {
     setPayloadPosting(true);
