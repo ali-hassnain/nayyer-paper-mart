@@ -33,6 +33,7 @@ const Login = () => {
     formData.options = { shouldCreateUser: false };
     try {
       let { data, error } = await supabase.auth.signInWithOtp(formData);
+      console.log("-> data", data);
       setPayloadPosting(false);
       reset();
       setFormMessage({
@@ -49,7 +50,7 @@ const Login = () => {
         type: `error`,
         message:
           error.code === `otp_disabled`
-            ? `Email address not found. Please create your account and try again.`
+            ? `Email address not found. Please contact admin to register your account.`
             : `Oops, something went wrong. Please try again later.`,
       });
     }

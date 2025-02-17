@@ -7,8 +7,10 @@ import Container from "@/components/wrappers/Container";
 import { SCHEMA__SignupForm } from "@/lib/schema";
 import { useForm } from "react-hook-form";
 import { createClient } from "@/supabase/client";
+import { notFound } from "next/navigation";
 
 const Login = () => {
+  return notFound(); // remove this when signup form is needed in future
   const {
     register,
     handleSubmit,

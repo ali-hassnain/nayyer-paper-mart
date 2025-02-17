@@ -224,11 +224,11 @@ const HeaderVariant01 = ({ navigationSchema }) => {
                     <div className="pr-[1rem]">
                       <Button title={`Log In`} destination={loginPageUrl} />
                     </div>
-                    <Button
-                      theme={`secondary`}
-                      title={`Sign Up`}
-                      destination={`/auth/sign-up`}
-                    />
+                    {/*<Button*/}
+                    {/*  theme={`secondary`}*/}
+                    {/*  title={`Sign Up`}*/}
+                    {/*  destination={`/auth/sign-up`}*/}
+                    {/*/>*/}
                   </>
                 )}
               </nav>

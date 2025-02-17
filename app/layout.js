@@ -14,9 +14,9 @@ export const pacaembu = localFont({
 
 export const metadata = {
   title:
-    "Free Stock Photos, Royalty Free Stock Images & Copyright Free Pictures | Mujmua",
+    "Swoop Parts",
   description:
-    "Free stock photos & videos you can use everywhere. Browse millions of high-quality royalty free stock images & copyright free pictures. No attribution required.",
+    "Best automobile parts sourcing platform in the United Arab Emirates",
 };
 
 export default async function RootLayout({ children }) {

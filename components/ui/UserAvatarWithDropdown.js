@@ -12,8 +12,8 @@ import UserAvatar from "./UserAvatar";
 import Link from "next/link";
 
 const UserAvatarWithDropdown = ({ user }) => {
-  const initials = user?.user_metadata?.first_name[0];
-  const handle = `@${user?.user_metadata?.username_handle}`;
+  const initials = user?.user_metadata?.first_name?.[0] ?? "A";
+  const handle = `@${user?.user_metadata?.username_handle}` ?? "@ali_hassnain";
   return (
     <>
       <DropdownMenu>
