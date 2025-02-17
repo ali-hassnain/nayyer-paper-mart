@@ -23,8 +23,8 @@ export default async function RootLayout({ children }) {
   const user = await GET__getUser();
   return (
     <html lang="en">
-    <head>
-      <link rel="shortcut icon" href="#" />
+    <head>s
+      <link rel="icon" href="/favicon.ico" type="image/png"/>
     </head>
       <body className={`${pacaembu.variable}`}>
         <NextTopLoader
