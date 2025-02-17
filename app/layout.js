@@ -23,6 +23,9 @@ export default async function RootLayout({ children }) {
   const user = await GET__getUser();
   return (
     <html lang="en">
+    <head>
+      <link rel="shortcut icon" href="#" />
+    </head>
       <body className={`${pacaembu.variable}`}>
         <NextTopLoader
           color="var(--t-primary-branding-color)"
