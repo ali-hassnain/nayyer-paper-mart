@@ -60,7 +60,9 @@ const Login = () => {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    console.log("-> searchParams", searchParams);
     if (searchParams.get("email_verified")) {
+      console.log("yaayayaya-> yaayayaya", );
       setEmailVerified(true);
     }
   }, []);
