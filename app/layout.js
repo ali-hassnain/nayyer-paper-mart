@@ -6,35 +6,46 @@ import NextTopLoader from "nextjs-toploader";
 import { GET__getUser } from "@/services/queries-ssr";
 import { AppWrapper } from "@/context/AppWrapper";
 import { Toaster } from "@/components/ui/shadcn/sonner";
+import Script from "next/script";
+import { GET__getProfileByUserId } from "@/services/queries-ssr";
 
 export const pacaembu = localFont({
-  src: "../public/fonts/Pacaembu.woff2",
-  variable: "--t-font-family-global",
+	src: "../public/fonts/Pacaembu.woff2",
+	variable: "--t-font-family-global",
 });
 
 export const metadata = {
-  title:
-    "Swoop Parts",
-  description:
-    "Best automobile parts sourcing platform in the United Arab Emirates",
+	title: "Swoop Parts",
+	description:
+		"Best automobile parts sourcing platform in the United Arab Emirates",
 };
 
 export default async function RootLayout({ children }) {
-  const user = await GET__getUser();
-  return (
-    <html lang="en">
-      <body className={`${pacaembu.variable}`}>
-        <NextTopLoader
-          color="var(--t-primary-branding-color)"
-          showSpinner={false}
-          height={2}
-          zIndex={999999}
-        />
-        <AppWrapper user={user}>
-          <Layout>{children}</Layout>
-        </AppWrapper>
-        <Toaster position="top-center" />
-      </body>
-    </html>
-  );
+	const user = await GET__getUser();
+	const { profile } = await GET__getProfileByUserId(user.id);
+	return (
+		<html lang='en'>
+			<head>
+				<Script
+					src='https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js'
+					strategy='beforeInteractive'
+				/>
+				<Script
+					src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY}&libraries=places`}
+				/>
+			</head>
+			<body className={`${pacaembu.variable}`}>
+				<NextTopLoader
+					color='var(--t-primary-branding-color)'
+					showSpinner={false}
+					height={2}
+					zIndex={999999}
+				/>
+				<AppWrapper user={user} profile={profile[0]}>
+					<Layout>{children}</Layout>
+				</AppWrapper>
+				<Toaster position='top-center' />
+			</body>
+		</html>
+	);
 }

@@ -5,6 +5,7 @@ import Bounded from "@/components/wrappers/Bounded";
 import Heading from "@/components/ui/Heading";
 
 export default async function ProfilePage({ params }) {
+  return notFound()
   params = await params;
   let { profile } = params;
   const starting = profile.slice(0, 3);

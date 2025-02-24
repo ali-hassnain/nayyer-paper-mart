@@ -3,12 +3,16 @@ import { createContext, useContext } from "react";
 
 const AppContext = createContext();
 
-export function AppWrapper({ user, children }) {
-  // console.log(`global user object: `, user);
+export function AppWrapper({ user, profile, children }) {
+	// console.log(`global user object: `, user);
 
-  return <AppContext.Provider value={{ user }}>{children}</AppContext.Provider>;
+	return (
+		<AppContext.Provider value={{ user, profile }}>
+			{children}
+		</AppContext.Provider>
+	);
 }
 
 export function useAppContext() {
-  return useContext(AppContext);
+	return useContext(AppContext);
 }

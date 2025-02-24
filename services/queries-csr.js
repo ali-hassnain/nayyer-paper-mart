@@ -1,4 +1,4 @@
-// import { createClient } from "@/supabase/client";
+import { createClient } from "@/supabase/client";
 
 // export async function GET__getPhotos(
 //   rangeStart = 0,
@@ -24,3 +24,13 @@
 //   const { data: photos, error } = await query;
 //   return { photos, error };
 // }
+
+export const GET__orders = async (status, userId) => {
+	const supabase = await createClient();
+	let query = supabase.from("orders").select("*").eq("requestor", userId);
+	if (status !== null) {
+		query = query.eq("status", status);
+	}
+	const { data: orders, error } = await query;
+	return { orders, error };
+};
