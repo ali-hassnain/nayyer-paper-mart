@@ -161,7 +161,7 @@ const InquiryTable = ({
 				status: salesStatus.QUOTATION,
 				quote_price: formData.quote_price,
 				quote_images: uploadedQuoteImages.quote_pictures,
-				quote_giver: user?.id,
+				quote_giver: userId,
 			};
 			if (!payload.quote_images?.length) {
 				throw new Error("Image upload failed. Please try again.");
