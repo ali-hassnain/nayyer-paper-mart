@@ -219,18 +219,18 @@ const HeaderVariant01 = ({ navigationSchema }) => {
 										<UserAvatarWithDropdown user={profile} />
 									</>
 								)}
-								{!user?.data.user && (
-									<>
-										<div className='pr-[1rem]'>
-											<Button title={`Log In`} destination={loginPageUrl} />
-										</div>
-										{/*<Button*/}
-										{/*  theme={`secondary`}*/}
-										{/*  title={`Sign Up`}*/}
-										{/*  destination={`/auth/sign-up`}*/}
-										{/*/>*/}
-									</>
-								)}
+								{/*{!user?.data.user && (*/}
+								{/*	<>*/}
+								{/*		<div className='pr-[1rem]'>*/}
+								{/*			<Button title={`Log In`} destination={loginPageUrl} />*/}
+								{/*		</div>*/}
+								{/*		<Button*/}
+								{/*		  theme={`secondary`}*/}
+								{/*		  title={`Sign Up`}*/}
+								{/*		  destination={`/auth/sign-up`}*/}
+								{/*		/>*/}
+								{/*	</>*/}
+								{/*)}*/}
 							</nav>
 						</div>
 						{/*<div className='b__header__variant01__hamburger-wrapper'>*/}
@@ -277,15 +277,15 @@ const HeaderVariant01 = ({ navigationSchema }) => {
 											);
 										})}
 									</ul>
-									<div className='mt-4 pt-2'>
-										{!user?.data.user && (
-											<Button
-												className='text-center w-100'
-												title={`Log In`}
-												destination={loginPageUrl}
-											/>
-										)}
-									</div>
+									{/*<div className='mt-4 pt-2'>*/}
+									{/*	{!user?.data.user && (*/}
+									{/*		<Button*/}
+									{/*			className='text-center w-100'*/}
+									{/*			title={`Log In`}*/}
+									{/*			destination={loginPageUrl}*/}
+									{/*		/>*/}
+									{/*	)}*/}
+									{/*</div>*/}
 								</nav>
 							</div>
 						</div>
