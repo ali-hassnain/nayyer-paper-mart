@@ -1,17 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import ItemCard from "@/components/ui/ItemCard";
 import Button from "@/components/ui/Button";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import Modal from "@/components/ui/Modal";
 import Form from "@/components/ui/Form";
-import { SCHEMA__RejectReasonForm } from "../../lib/schema";
+import { SCHEMA__RejectReasonForm } from "@/lib/schema";
 import { useForm } from "react-hook-form";
 import { salesStatus } from "@/lib/constants";
 import ConfirmableToggleSwitch from "@/components/ui/ConfirmableToggleSwitch";
 import { purchaserStatus } from "@/lib/constants";
 import { PATCH__updateOrder } from "@/services/actions";
 import { toast } from "sonner";
+import useSignedUrls from "@/lib/hooks/useSignedUrl";
+import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import Spinner from "./Spinner";
+import ImageGallery from "./PinesImageGallery";
 
 const QuotationCard = (props) => {
 	const {
@@ -28,9 +33,17 @@ const QuotationCard = (props) => {
 	const [isRejectionModalOpen, setIsRejectionModalOpen] = useState(false);
 	const [formMessage, setFormMessage] = useState(null);
 	const [payloadPosting, setPayloadPosting] = useState(false);
-
-	const { quotation, status } = props;
-	console.log("-> quotation", quotation);
+	const [quoteImagesModalOpen, setQuoteImagesModalOpen] = useState(false);
+	const { quotation, status, setActiveTab } = props;
+	const { signedUrls: quotationImageSrc, loading: quotationImageLoading } =
+		useSignedUrls(quotation?.parts_images || []);
+	const quotationTime = format(
+		new Date(quotation.created_at),
+		"do MMM, yyyy h:mma"
+	).toLowerCase();
+	const router = useRouter();
+	const { signedUrls: quoteImages, loading: quoteImagesLoading } =
+		useSignedUrls(quotation?.quote_images);
 
 	const updateToggleStatuses = async (key) =>
 		await PATCH__updateOrder({
@@ -55,6 +68,9 @@ const QuotationCard = (props) => {
 				type: `success`,
 				message: `Purchaser is notified of rejected quote.`,
 			});
+			setTimeout(() => {
+				router.push("/");
+			}, 1000);
 		} catch (error) {
 			console.log("-> error", error);
 			setFormMessage({
@@ -70,7 +86,7 @@ const QuotationCard = (props) => {
 	const onAcceptingQuotation = async () => {
 		try {
 			const payload = {
-				status: purchaserStatus.PENDING,
+				status: purchaserStatus.APPROVED,
 			};
 			const { data, error } = await PATCH__updateOrder({
 				orderId: quotation.id,
@@ -78,6 +94,10 @@ const QuotationCard = (props) => {
 			});
 			setIsConfirmationModalOpen(false);
 			toast.success("The purchaser is notified to deliver the product");
+			setTimeout(() => {
+				setIsConfirmationModalOpen(false);
+			}, 1000);
+			setActiveTab(1);
 		} catch (error) {
 			console.log(error);
 			setPayloadPosting(false);
@@ -89,6 +109,7 @@ const QuotationCard = (props) => {
 	return (
 		<div>
 			<ConfirmationModal
+				title={"Accept Quotation confirmation"}
 				message={"Are you sure you want to approve this quotation?"}
 				isOpen={isConfirmationModalOpen}
 				onConfirm={onAcceptingQuotation}
@@ -120,52 +141,67 @@ const QuotationCard = (props) => {
 					reset();
 				}}
 			/>
-			{console.log("quotation", quotation)}
+			<Modal
+				title={"Quote part images"}
+				content={
+					quoteImagesLoading ? (
+						<Spinner />
+					) : (
+						<div>
+							<ImageGallery images={quoteImages} loading={quoteImagesLoading} />
+						</div>
+					)
+				}
+				isOpen={quoteImagesModalOpen}
+				onClose={() => setQuoteImagesModalOpen(false)}
+				showActionButtons={false}
+			/>
 			<ItemCard
+				footerClassName={"justify-end"}
 				key={quotation.id}
 				post={quotation}
-				image={
-					<a
-						href={quotation.url}
-						target='_blank'
-						rel='noopener noreferrer'
-						className='block transition-opacity duration-200 fade-in hover:opacity-70'
-					>
-						<Image
-							src={quotation.parts_images[0]}
-							alt={`${quotation.vehicle_make} - ${quotation.variant}`}
-							fill
-							className='object-cover object-center'
-						/>
-					</a>
-				}
+				imageSrc={quotationImageSrc[0]}
+				imageLoader={quotationImageLoading}
 				headerContent={
-					<h3 className='text-lg font-semibold hover:underline md:text-xl'>
-						<a href={quotation.url} target='_blank' rel='noopener noreferrer'>
-							{quotation.part_name}
-						</a>
-					</h3>
+					<div
+						className={"cursor-pointer"}
+						onClick={() => setQuoteImagesModalOpen(true)}
+					>
+						<h3 className='text-lg font-semibold hover:underline md:text-xl'>
+							<a href={quotation.url} target='_blank' rel='noopener noreferrer'>
+								{quotation.part_name}
+							</a>
+							<p className={"text-lg font-semibold md:text-xl"}>
+								{quotation.quote_price} AED
+							</p>
+						</h3>
+					</div>
 				}
 				content={
 					<>
 						<p className='text-muted-foreground'>
 							{quotation.vehicle_make} {quotation.variant}
 						</p>
+						<p>{quotationTime}</p>
 					</>
 				}
 				footerContent={
 					<>
 						{status === salesStatus.QUOTATION && (
-							<div className={"gap-2 flex"}>
-								<Button
-									actionable={true}
-									title={`Accept`}
-									onClick={() => setIsConfirmationModalOpen(true)}
-								/>
+							<div className={"gap-2 flex "}>
 								<Button
 									title={"Reject"}
 									actionable={true}
 									onClick={() => setIsRejectionModalOpen(true)}
+									theme={"ghost-secondary"}
+									className={"!py-2 !px-4"}
+								/>
+								<Button
+									actionable={true}
+									title={`Accept`}
+									onClick={() => setIsConfirmationModalOpen(true)}
+									theme={"ghost-primary"}
+									className={"!py-2 !px-4"}
 								/>
 								<Button />
 							</div>

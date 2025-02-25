@@ -13,11 +13,8 @@ import AddGarageFormModal from "@/components/ui/AddGarageFormModal";
 import { usePaginatedOptions } from "@/lib/hooks/usePaginatedOptions";
 import { toast } from "sonner";
 import { imageUploadProcess } from "@/lib/helpers";
-import {
-	purchaserStatus,
-	salesStatus,
-	supabaseStorageBucketURL,
-} from "@/lib/constants";
+import { useRouter } from "next/navigation";
+import { purchaserStatus, supabaseStorageBucketURL } from "@/lib/constants";
 
 const CreateOrderForm = () => {
 	const { user } = useAppContext();
@@ -41,8 +38,8 @@ const CreateOrderForm = () => {
 		variantId: null,
 	});
 	const { loadOptions, updatePage } = usePaginatedOptions();
+	const router = useRouter();
 
-	// Memoized loaders for each entity type
 	const makeLoader = useCallback(
 		(search, loadedOptions, { page }) => loadOptions("makes", search),
 		[loadOptions]
@@ -90,39 +87,45 @@ const CreateOrderForm = () => {
 		const results = {};
 		if (formData.mulkiya_chassis?.[0]) {
 			uploadPromises.push(
-				imageUploadProcess({
-					files: formData.mulkiya_chassis,
-					userId,
-					bucketName: "mulkiya",
-					storageBucketURL: supabaseStorageBucketURL("mulkiya"),
-					onProgressUpdate: (file, progress) =>
-						console.log(`${file.name}: ${progress}%`),
-					onFileUploaded: (fileData) => {
-						results.mulkiya_chassis = fileData.src;
-					},
-					onCompletion: () => console.log("Mulkiya upload complete"),
-					onError: (file, message) => toast.error(`${file.name}: ${message}`),
-				})()
+				new Promise(async (resolve) => {
+					const signedURL = await imageUploadProcess({
+						files: formData.mulkiya_chassis,
+						userId,
+						bucketName: "mulkiya",
+						storageBucketURL: supabaseStorageBucketURL,
+						onProgressUpdate: (file, progress) =>
+							console.log(`${file.name}: ${progress}%`),
+						onFileUploaded: (fileData) => {
+							results.mulkiya_chassis = fileData.src;
+						},
+						onCompletion: () => {},
+						onError: (file, message) => toast.error(`${file.name}: ${message}`),
+					})();
+					resolve(signedURL);
+				})
 			);
 		}
 		if (formData.part_pictures?.length) {
 			uploadPromises.push(
-				imageUploadProcess({
-					files: formData.part_pictures,
-					userId,
-					bucketName: "request-images",
-					storageBucketURL: supabaseStorageBucketURL("request-images"),
-					onProgressUpdate: (file, progress) =>
-						console.log(`${file.name}: ${progress}%`),
-					onFileUploaded: (fileData) => {
-						results.part_pictures = [
-							...(results.part_pictures || []),
-							fileData.src,
-						];
-					},
-					onCompletion: () => console.log("Part pictures upload complete"),
-					onError: (file, message) => toast.error(`${file.name}: ${message}`),
-				})()
+				new Promise(async (resolve) => {
+					const signedURLs = await imageUploadProcess({
+						files: formData.part_pictures,
+						userId,
+						bucketName: "request-images",
+						storageBucketURL: supabaseStorageBucketURL,
+						onProgressUpdate: (file, progress) =>
+							console.log(`${file.name}: ${progress}%`),
+						onFileUploaded: (fileData) => {
+							results.part_pictures = [
+								...(results.part_pictures || []),
+								fileData.src,
+							];
+						},
+						onCompletion: () => {},
+						onError: (file, message) => toast.error(`${file.name}: ${message}`),
+					})();
+					resolve(signedURLs);
+				})
 			);
 		}
 		await Promise.all(uploadPromises);
@@ -153,13 +156,14 @@ const CreateOrderForm = () => {
 		try {
 			const uploadedData = await handleFileUploads(formData);
 			if (
-				!uploadedData?.mulkiya_chassis &&
-				uploadedData?.part_pictures?.length === 0
+				!uploadedData.mulkiya_chassis &&
+				(!uploadedData.part_pictures || uploadedData.part_pictures.length === 0)
 			) {
-				return;
+				throw new Error(
+					"No images uploaded. Please upload at least one image."
+				);
 			}
-			console.log("-> formData", formData);
-			const payloadToCreatOrder = {
+			const payloadToCreateOrder = {
 				part_name: formData.part_name,
 				vehicle_make: formData.make.label,
 				garage: formData.garage_name.value,
@@ -169,26 +173,35 @@ const CreateOrderForm = () => {
 				chassis_pic: [uploadedData?.mulkiya_chassis],
 				status: purchaserStatus.OPEN,
 			};
-			console.log("-> payloadToCreatOrder", payloadToCreatOrder);
+			if (
+				!payloadToCreateOrder.parts_images?.length &&
+				!payloadToCreateOrder.chassis_pic?.length
+			) {
+				throw new Error("Image upload failed. Please try again.");
+			}
 			const { data, error } = await supabase
 				.from("orders")
-				.insert([payloadToCreatOrder])
+				.insert([payloadToCreateOrder])
 				.select();
 			if (error) {
 				throw new Error(`Error: ${error.message}`);
 			}
 			setPayloadPosting(false);
 			setFormMessage({
-				type: `success`,
-				message: `Order created successfully.`,
+				type: "success",
+				message: "Order created successfully.",
 			});
+			setTimeout(() => {
+				router.push("/");
+			}, 1000);
 		} catch (error) {
-			console.log(error);
+			console.error("❌ Order Submission Error:", error);
 			setPayloadPosting(false);
 			setFormMessage({
-				type: `error`,
+				type: "error",
 				message: error.message,
 			});
+		} finally {
 		}
 	};
 
@@ -209,8 +222,6 @@ const CreateOrderForm = () => {
 					</div>
 					<div className='mx-auto'>
 						<AuthCard heading={`Create Order`} description={null}>
-							{/*{isLoading && <Spinner />}*/}
-							{/*{!isLoading && (*/}
 							<Form
 								isValid={isValid}
 								formFields={formSchema}
@@ -222,7 +233,6 @@ const CreateOrderForm = () => {
 								payloadPosting={payloadPosting}
 								formMessage={formMessage}
 							/>
-							{/*)}*/}
 						</AuthCard>
 					</div>
 				</Container>

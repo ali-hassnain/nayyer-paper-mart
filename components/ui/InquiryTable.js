@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import TableWrapper from "@/components/ui/Table";
 import AccordionWrapper from "@/components/ui/Accordian";
 import { purchaserStatus } from "@/lib/constants";
@@ -13,12 +13,19 @@ import { toast } from "sonner";
 import { useAppContext } from "@/context/AppWrapper";
 import { PATCH__updateOrder } from "@/services/actions";
 import { salesStatus } from "@/lib/constants";
+import ImageGallery from "./PinesImageGallery";
+import Spinner from "./Spinner";
+import useSignedUrls from "@/lib/hooks/useSignedUrl";
+import Heading from "./Heading";
+import HoverCard from "@/components/ui/HoverCard";
+import { Badge } from "@/components/ui/shadcn/Badge";
 
 const InquiryTable = ({
 	inquiries = [],
 	tableColumns,
 	status,
 	fetchOrders = () => {},
+	setActiveTab = () => {},
 }) => {
 	const [formMessage, setFormMessage] = useState(null);
 	const [payloadPosting, setPayloadPosting] = useState(false);
@@ -38,8 +45,34 @@ const InquiryTable = ({
 	const [modalOpen, setModalOpen] = useState(false);
 	const [selectedRow, setSelectedRow] = useState(null);
 	const [modalType, setModalType] = useState("");
+	const [chassisPics, setChassisPics] = useState([]);
+	const [partsPics, setPartsPics] = useState([]);
 
-	// Updated modal functions using state.
+	useEffect(() => {
+		if (selectedRow) {
+			const chassis =
+				typeof selectedRow.chassis_pic === "string"
+					? JSON.parse(selectedRow.chassis_pic)
+					: selectedRow.chassis_pic || [];
+
+			const parts =
+				typeof selectedRow.parts_images === "string"
+					? JSON.parse(selectedRow.parts_images)
+					: selectedRow.parts_images || [];
+
+			setChassisPics(chassis);
+			setPartsPics(parts);
+		} else {
+			setChassisPics([]);
+			setPartsPics([]);
+		}
+	}, [selectedRow]);
+
+	const { signedUrls: chassisImageSrc, loading: chassisLoading } =
+		useSignedUrls(chassisPics);
+	const { signedUrls: partsImageSrc, loading: partsLoading } =
+		useSignedUrls(partsPics);
+
 	const openQuoteModal = (row) => {
 		setSelectedRow(row);
 		setModalType("quote");
@@ -58,10 +91,11 @@ const InquiryTable = ({
 		setModalType("");
 	};
 
+	// for approved actions
 	const handleConfirm = async () => {
 		try {
 			const payload = {
-				status: purchaserStatus.PENDING,
+				status: salesStatus.DELIVERY,
 			};
 			const { data, error } = await PATCH__updateOrder({
 				orderId: selectedRow.id,
@@ -69,6 +103,7 @@ const InquiryTable = ({
 			});
 			closeModal();
 			toast.success("The salesperson is notified about delivery confirmation");
+			fetchOrders(purchaserStatus.APPROVED);
 		} catch (error) {
 			console.log(error);
 			setPayloadPosting(false);
@@ -84,63 +119,90 @@ const InquiryTable = ({
 		closeModal();
 		reset();
 	};
+
+	const handleUploadQuoteImages = async (formData) => {
+		const results = {};
+		if (formData.quote_pictures?.[0]) {
+			await new Promise((resolve) => {
+				imageUploadProcess({
+					files: formData.quote_pictures,
+					userId,
+					bucketName: "quote-images",
+					storageBucketURL: supabaseStorageBucketURL,
+					onProgressUpdate: (file, progress) =>
+						console.log(`${file.name}: ${progress}%`),
+					onFileUploaded: (fileData) => {
+						results.quote_pictures = results.quote_pictures || [];
+						results.quote_pictures.push(fileData.src);
+					},
+					onCompletion: resolve,
+					onError: (file, message) => toast.error(`${file.name}: ${message}`),
+				})();
+			});
+		}
+		return results;
+	};
+
 	const onSubmitQuotation = async (formData) => {
 		setPayloadPosting(true);
 		setFormMessage(null);
+
 		try {
-			const uploadedQuoteImages = handleUploadQuoteImages(formData);
-			console.log("-> uploadedQuoteImages", uploadedQuoteImages);
-			if (uploadedQuoteImages.quote_pictures?.length === 0) return;
+			const uploadedQuoteImages = await handleUploadQuoteImages(formData);
+			if (
+				!uploadedQuoteImages.quote_pictures ||
+				uploadedQuoteImages.quote_pictures.length === 0
+			) {
+				throw new Error(
+					"No images uploaded. Please upload at least one image."
+				);
+			}
 			const payload = {
 				status: salesStatus.QUOTATION,
 				quote_price: formData.quote_price,
 				quote_images: uploadedQuoteImages.quote_pictures,
 			};
+			if (!payload.quote_images?.length) {
+				throw new Error("Image upload failed. Please try again.");
+			}
 			const { data, error } = await PATCH__updateOrder({
 				orderId: selectedRow.id,
 				updatePayload: payload,
 			});
 			setPayloadPosting(false);
 			setFormMessage({
-				type: `success`,
-				message: `Quote sent successfully to the salesperson.`,
+				type: "success",
+				message: "Quote sent successfully to the salesperson.",
 			});
-			fetchOrders(purchaserStatus.OPEN);
+			setActiveTab(1);
+			// fetchOrders(purchaserStatus.QUOTATION);
 		} catch (error) {
-			console.log("-> error", error);
+			console.error("❌ Submission Error:", error);
 			setPayloadPosting(false);
 			setFormMessage({
-				type: `error`,
+				type: "error",
 				message: error.message,
 			});
 		}
 	};
 
-	const handleUploadQuoteImages = (formData) => {
-		const results = {};
-		if (formData.quote_pictures?.[0]) {
-			imageUploadProcess({
-				files: formData.quote_pictures,
-				userId,
-				bucketName: "quote-images",
-				storageBucketURL: supabaseStorageBucketURL("quote-images"),
-				onProgressUpdate: (file, progress) =>
-					console.log(`${file.name}: ${progress}%`),
-				onFileUploaded: (fileData) => {
-					results.quote_pictures = fileData.src;
-				},
-				onCompletion: () => console.log("Quote pictures upload complete"),
-				onError: (file, message) => toast.error(`${file.name}: ${message}`),
-			})();
-		}
-		return results;
-	};
-
-	// Define default columns (excluding the Actions column initially)
 	const defaultColumns = [
 		{
 			header: "Part Name",
 			accessor: "part_name",
+			render: (value, row) => (
+				<button
+					className='text-blue-500 underline hover:text-blue-700'
+					onClick={(e) => {
+						e.stopPropagation();
+						setSelectedRow(row);
+						setModalType("details");
+						setModalOpen(true);
+					}}
+				>
+					{value}
+				</button>
+			),
 		},
 		{
 			header: "Make",
@@ -165,19 +227,21 @@ const InquiryTable = ({
 				if (status === purchaserStatus.OPEN) {
 					return (
 						<Button
-							className='btn btn-primary'
 							onClick={() => openQuoteModal(row)}
 							actionable={true}
 							title={"Quote"}
+							theme={"ghost-primary"}
+							className={"!py-2 !px-4"}
 						/>
 					);
 				} else if (status === purchaserStatus.APPROVED) {
 					return (
 						<Button
-							className='btn btn-primary'
+							theme={"ghost-primary"}
 							onClick={() => openShippedModal(row)}
 							actionable={true}
-							title={"ship"}
+							title={"Ship"}
+							className={"!py-2 !px-4"}
 						/>
 					);
 				}
@@ -197,7 +261,20 @@ const InquiryTable = ({
 	// Enhance each part row with inquiry.makeAndModel so that we can use it in the modal.
 	const accordionItems = inquiries.map((inquiry, index) => ({
 		value: inquiry.id || `inquiry-${index}`,
-		trigger: `${inquiry.vehicle_make} ${inquiry.variant}`,
+		trigger: (
+			<div className='flex items-center gap-2'>
+				<span>{`${inquiry.vehicle_make} ${inquiry.variant}`}</span>
+				{inquiry.status === purchaserStatus.REJECTED && (
+					<HoverCard content={inquiry.reject_reason}>
+						<Badge
+							className={`inline-block bg-red-900 text-white text-xs font-semibold px-2 py-1 rounded`}
+						>
+							{inquiry.status}
+						</Badge>
+					</HoverCard>
+				)}
+			</div>
+		),
 		content: (
 			<div className='overflow-x-auto'>
 				<div className='min-w-max '>
@@ -214,7 +291,18 @@ const InquiryTable = ({
 	// Determine modal title and content based on modalType and selectedRow.
 	let modalTitle = "";
 	let modalContent = null;
-	if (modalType === "quote" && selectedRow) {
+	if (modalType === "details" && selectedRow) {
+		modalContent = chassisLoading ? (
+			<Spinner />
+		) : (
+			<div>
+				<Heading className='u__h5 my-2'>Mulkiya/Chassis Image</Heading>
+				<ImageGallery images={chassisImageSrc} loading={chassisLoading} />
+				<Heading className='u__h5 my-2'>Parts Images</Heading>
+				<ImageGallery images={partsImageSrc} loading={partsLoading} />
+			</div>
+		);
+	} else if (modalType === "quote" && selectedRow) {
 		modalTitle = `Quote for ${selectedRow.part_name} - ${selectedRow.vehicle_make} ${selectedRow.variant}`;
 		modalContent = (
 			<Form
@@ -239,7 +327,8 @@ const InquiryTable = ({
 				</p>
 				<p>
 					Are you sure you want to confirm shipping for the part:{" "}
-					<strong>{selectedRow.part_name}</strong>?
+					<strong>{selectedRow.part_name}</strong> at the price of{" "}
+					<strong>{selectedRow.quote_price} AED</strong>?
 				</p>
 				<div>{""}</div>
 				<p>

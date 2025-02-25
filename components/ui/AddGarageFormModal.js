@@ -10,7 +10,6 @@ const AddGarageFormModal = (props) => {
 	const { isModalOpen, setIsModalOpen } = props;
 	const [formMessage, setFormMessage] = useState(null);
 	const [payloadPosting, setPayloadPosting] = useState(false);
-
 	const {
 		register,
 		handleSubmit,
@@ -44,6 +43,9 @@ const AddGarageFormModal = (props) => {
 				type: `success`,
 				message: `Garage added successfully updated.`,
 			});
+			setTimeout(() => {
+				setIsModalOpen(false);
+			}, 1000);
 		} catch (error) {
 			console.log(error);
 			setPayloadPosting(false);

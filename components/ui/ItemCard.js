@@ -7,6 +7,7 @@ import {
 	CardFooter,
 } from "@/components/ui/shadcn/card";
 import { ArrowRight } from "lucide-react";
+import Spinner from "./Spinner";
 
 /**
  * GenericCard Component
@@ -21,17 +22,31 @@ const ItemCard = ({
 	footerContent,
 	content,
 	headerContent,
-	image,
+	imageSrc,
+	footerClassName,
+	loading,
 }) => {
 	return (
 		<Card
 			key={post.id}
-			className={`grid grid-rows-[auto_auto_1fr_auto] ${className}`}
+			className={`grid grid-rows-[auto_auto_1fr_auto] rounded-lg ${className}`}
 		>
-			<div className='relative aspect-[16/9] w-full'>{image}</div>
+			<div className=' bg-[#f2f2f2] rounded-lg relative aspect-[16/9] w-auto block transition-opacity duration-200 fade-in hover:opacity-95 cursor-pointer'>
+				{!loading && (
+					<Image
+						src={
+							imageSrc ?? "https://placehold.co/400?text=Loading...&font=roboto"
+						}
+						alt={post.title || "Image"}
+						fill
+						className='object-cover rounded-lg'
+						unoptimized={true}
+					/>
+				)}
+			</div>
 			<CardHeader>{headerContent}</CardHeader>
 			<CardContent>{content}</CardContent>
-			<CardFooter>{footerContent}</CardFooter>
+			<CardFooter className={footerClassName}>{footerContent}</CardFooter>
 		</Card>
 	);
 };

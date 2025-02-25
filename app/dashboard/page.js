@@ -29,9 +29,7 @@ const Dashboard = () => {
 	const [loading, setLoading] = useState(false);
 	const { user, profile } = useAppContext();
 	const { user_metadata: userMetaData } = user?.data?.user || ``;
-	const userRole =
-		// "sales";
-		profile?.role;
+	const userRole = profile?.role;
 	const userId = user?.data?.user?.id;
 
 	useEffect(() => {
@@ -48,11 +46,12 @@ const Dashboard = () => {
 	const getStatusParam = (tabIndex) => {
 		if (userRole === roles.SALES) {
 			if (tabIndex === 0) return salesStatus.QUOTATION;
-			if (tabIndex === 1) return salesStatus.SHIPMENT;
+			if (tabIndex === 1) return purchaserStatus.APPROVED; // the ticket which is approved by the salesman should show in shipment tab
 			if (tabIndex === 2) return salesStatus.DELIVERY;
 		} else if (userRole === roles.PURCHASER) {
-			if (tabIndex === 0) return purchaserStatus.OPEN;
-			if (tabIndex === 1) return purchaserStatus.PENDING;
+			if (tabIndex === 0)
+				return [purchaserStatus.OPEN, purchaserStatus.REJECTED];
+			if (tabIndex === 1) return salesStatus.QUOTATION; // the ticket which goes in quotation should show in pending of purchaser
 			if (tabIndex === 2) return purchaserStatus.APPROVED;
 		}
 		return null;
@@ -66,7 +65,6 @@ const Dashboard = () => {
 				console.error("Error fetching orders:", error);
 			} else {
 				setOrders(ordersData);
-				console.log("-> ordersData", ordersData);
 			}
 		} catch (error) {
 			console.error("Error:", error);
@@ -87,6 +85,7 @@ const Dashboard = () => {
 							inquiries={orders}
 							status={purchaserStatus.OPEN}
 							fetchOrders={fetchOrders}
+							setActiveTab={setActiveTab}
 						/>
 					) : (
 						<EmptyState
@@ -94,7 +93,9 @@ const Dashboard = () => {
 							description='You have no open inquiries at the moment.'
 							icon={<MailQuestion size={40} />}
 							actionText='Refresh'
-							onAction={() => fetchOrders(purchaserStatus.OPEN)}
+							onAction={() =>
+								fetchOrders([purchaserStatus.OPEN, purchaserStatus.REJECTED])
+							}
 						/>
 					)}
 				</div>
@@ -109,7 +110,7 @@ const Dashboard = () => {
 					) : orders && orders.length > 0 ? (
 						<InquiryTable
 							inquiries={orders}
-							status={purchaserStatus.PENDING}
+							status={salesStatus.QUOTATION}
 							fetchOrders={fetchOrders}
 						/>
 					) : (
@@ -118,7 +119,7 @@ const Dashboard = () => {
 							description='You have no pending inquiries at the moment.'
 							icon={<Clock9 size={40} />}
 							actionText='Refresh'
-							onAction={() => fetchOrders(purchaserStatus.PENDING)}
+							onAction={() => fetchOrders(salesStatus.QUOTATION)}
 						/>
 					)}
 				</div>
@@ -164,6 +165,7 @@ const Dashboard = () => {
 									quotation={order}
 									status={salesStatus.QUOTATION}
 									fetchOrders={fetchOrders}
+									setActiveTab={setActiveTab}
 								/>
 							))}
 						</div>
@@ -205,7 +207,7 @@ const Dashboard = () => {
 								description='You have no shipments at the moment.'
 								icon={<PackageCheck size={40} />}
 								actionText='Refresh'
-								onAction={() => fetchOrders(salesStatus.SHIPMENT)}
+								onAction={() => fetchOrders(purchaserStatus.APPROVED)}
 							/>
 						</div>
 					)}

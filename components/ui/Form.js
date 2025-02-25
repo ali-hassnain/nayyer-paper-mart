@@ -298,7 +298,7 @@ const Form = ({
 						})}
 					</div>
 					{buttonTitle && (
-						<div className={`c__form__button - wrapper`}>
+						<div className={`c__form__button - wrapper `}>
 							<Button
 								actionable
 								title={buttonTitle}
