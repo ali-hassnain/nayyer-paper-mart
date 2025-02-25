@@ -1,4 +1,3 @@
-// import { loginPageUrl } from "@/lib/constants";
 import { createClient } from "@/supabase/client";
 const supabase = createClient();
 import { loginPageUrl } from "../lib/constants";
