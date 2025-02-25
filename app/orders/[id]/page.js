@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import Heading from "@/components/ui/Heading";
 
 const UserOrders = () => {
-	const { user } = useAppContext();
+	const { user,profile } = useAppContext();
 	const { user_metadata: userMetaData } = user?.data?.user || "";
 	const [orders, setOrders] = useState([]);
 	const [error, setError] = useState(null);
@@ -21,7 +21,7 @@ const UserOrders = () => {
 		if (!user?.data.user && !userMetaData) {
 			redirect("/");
 		} else {
-			GET__orders(null, user.data.user.id).then(({ orders, error }) => {
+			GET__orders(null, user.data.user.id,profile.role).then(({ orders, error }) => {
 				if (error) {
 					setError(error);
 				} else {

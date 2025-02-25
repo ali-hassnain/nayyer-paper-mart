@@ -58,7 +58,7 @@ const Dashboard = () => {
 	const fetchOrders = async (status) => {
 		setLoading(true);
 		try {
-			const { orders: ordersData, error } = await GET__orders(status, userId);
+			const { orders: ordersData, error } = await GET__orders(status, userId,userRole);
 			if (error) {
 				console.error("Error fetching orders:", error);
 			} else {

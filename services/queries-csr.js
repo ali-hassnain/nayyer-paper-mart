@@ -4,17 +4,17 @@ import { createClient } from "@/supabase/client";
 export const GET__orders = async (status, userId, userRole) => {
 	const supabase = await createClient();
 	let query = supabase.from("orders").select("*");
-	if (userRole === "purchaser") {
-		query = query.eq("quote_giver", userId);
-	} else {
-		const skipRequestor =
-			status !== null &&
-			(
-				(typeof status === "string" && (status === "open" || status === "rejected")) ||
-				(Array.isArray(status) && status.every(s => s === "open" || s === "rejected"))
-			);
-		if (!skipRequestor) {
+	const skipUserFilter =
+		status !== null &&
+		(
+			(typeof status === "string" && (status === "open" || status === "rejected")) ||
+			(Array.isArray(status) && status.every(s => s === "open" || s === "rejected"))
+		);
+	if (!skipUserFilter) {
+		if (userRole === "sales") {
 			query = query.eq("requestor", userId);
+		} else if (userRole === "purchaser") {
+			query = query.eq("quote_giver", userId);
 		}
 	}
 	query = query.order("created_at", { ascending: false });
