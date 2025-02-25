@@ -18,7 +18,7 @@ import Spinner from "@/components/ui/Spinner";
 import useSignedUrls from "@/lib/hooks/useSignedUrl";
 import Heading from "@/components/ui/Heading";
 import HoverCard from "@/components/ui/HoverCard";
-import { Badge } from "@/components/ui/shadcn/Badge";
+import { Badge } from "@/components/ui/shadcn/badge";
 
 const InquiryTable = ({
 	inquiries = [],
