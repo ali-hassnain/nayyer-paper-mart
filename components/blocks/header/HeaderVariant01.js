@@ -233,23 +233,23 @@ const HeaderVariant01 = ({ navigationSchema }) => {
 								)}
 							</nav>
 						</div>
-						<div className='b__header__variant01__hamburger-wrapper'>
-							<button
-								onClick={() => {
-									menuOpen ? setMenuOpen(false) : setMenuOpen(true);
-								}}
-								type='button'
-								role='button'
-								aria-label='Hamburger toggler'
-								className={`c__hamburger ${
-									menuOpen ? `c__hamburger--active` : ``
-								}`}
-							>
-								<span className='c__hamburger__line c__hamburger__line-top'></span>
-								<span className='c__hamburger__line c__hamburger__line-middle'></span>
-								<span className='c__hamburger__line c__hamburger__line-bottom'></span>
-							</button>
-						</div>
+						{/*<div className='b__header__variant01__hamburger-wrapper'>*/}
+						{/*	<button*/}
+						{/*		onClick={() => {*/}
+						{/*			menuOpen ? setMenuOpen(false) : setMenuOpen(true);*/}
+						{/*		}}*/}
+						{/*		type='button'*/}
+						{/*		role='button'*/}
+						{/*		aria-label='Hamburger toggler'*/}
+						{/*		className={`c__hamburger ${*/}
+						{/*			menuOpen ? `c__hamburger--active` : ``*/}
+						{/*		}`}*/}
+						{/*	>*/}
+						{/*		<span className='c__hamburger__line c__hamburger__line-top'></span>*/}
+						{/*		<span className='c__hamburger__line c__hamburger__line-middle'></span>*/}
+						{/*		<span className='c__hamburger__line c__hamburger__line-bottom'></span>*/}
+						{/*	</button>*/}
+						{/*</div>*/}
 						<div
 							className={`b__header__variant01__nav-wrapper b__header__variant01__nav-wrapper-small ${
 								menuOpen

@@ -19,9 +19,9 @@ import QuotationCard from "@/components/ui/QuotationCard";
 import EmptyState from "@/components/ui/EmptyState";
 import InquiryTable from "@/components/ui/InquiryTable";
 import { purchaserStatus } from "@/lib/constants";
-import { salesStatus } from "../../lib/constants";
-import { GET__orders } from "../../services/queries-csr";
-import Spinner from "../../components/ui/Spinner";
+import { salesStatus } from "@/lib/constants";
+import { GET__orders } from "@/services/queries-csr";
+import Spinner from "@/components/ui/Spinner";
 
 const Dashboard = () => {
 	const [activeTab, setActiveTab] = useState(0);

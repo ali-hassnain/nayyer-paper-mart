@@ -13,7 +13,7 @@ import Link from "next/link";
 import { roles } from "../../lib/constants";
 
 const UserAvatarWithDropdown = ({ user }) => {
-	const initials = user?.first_name?.[0] ?? "A";
+	const initials = user?.first_name?.[0];
 	return (
 		<>
 			<DropdownMenu>

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
+import React, { useState } from "react";
 import ItemCard from "@/components/ui/ItemCard";
 import Button from "@/components/ui/Button";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
@@ -15,8 +14,8 @@ import { toast } from "sonner";
 import useSignedUrls from "@/lib/hooks/useSignedUrl";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import Spinner from "./Spinner";
-import ImageGallery from "./PinesImageGallery";
+import Spinner from "@/components/ui/Spinner";
+import ImageGallery from "@/components/ui/PinesImageGallery";
 
 const QuotationCard = (props) => {
 	const {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import TableWrapper from "@/components/ui/Table";
 import AccordionWrapper from "@/components/ui/Accordian";
 import { purchaserStatus } from "@/lib/constants";
@@ -13,10 +13,10 @@ import { toast } from "sonner";
 import { useAppContext } from "@/context/AppWrapper";
 import { PATCH__updateOrder } from "@/services/actions";
 import { salesStatus } from "@/lib/constants";
-import ImageGallery from "./PinesImageGallery";
-import Spinner from "./Spinner";
+import ImageGallery from "@/components/ui/PinesImageGallery";
+import Spinner from "@/components/ui/Spinner";
 import useSignedUrls from "@/lib/hooks/useSignedUrl";
-import Heading from "./Heading";
+import Heading from "@/components/ui/Heading";
 import HoverCard from "@/components/ui/HoverCard";
 import { Badge } from "@/components/ui/shadcn/Badge";
 

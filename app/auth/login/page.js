@@ -42,8 +42,6 @@ const Login = () => {
 		formData.options = { shouldCreateUser: false };
 		try {
 			let { data, error } = await supabase.auth.signInWithOtp(formData);
-			console.log("-> error", error);
-			console.log("-> data", data);
 			setPayloadPosting(false);
 			reset();
 			setFormMessage({
@@ -69,9 +67,7 @@ const Login = () => {
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
-		console.log("-> searchParams", searchParams);
 		if (searchParams.get("email_verified")) {
-			console.log("yaayayaya-> yaayayaya");
 			setEmailVerified(true);
 		}
 	}, []);
