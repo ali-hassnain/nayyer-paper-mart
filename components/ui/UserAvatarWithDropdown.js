@@ -10,10 +10,10 @@ import {
 import { POST__signOut } from "@/services/actions";
 import UserAvatar from "./UserAvatar";
 import Link from "next/link";
-import { roles } from "../../lib/constants";
+import { roles } from "@/lib/constants";
 
 const UserAvatarWithDropdown = ({ user }) => {
-	const initials = user?.first_name?.[0];
+	const initials = user?.email?.[0];
 	return (
 		<>
 			<DropdownMenu>
@@ -24,13 +24,20 @@ const UserAvatarWithDropdown = ({ user }) => {
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className='w-56 c__lib__dropdown-menu'>
 					<DropdownMenuGroup>
-						<a href={`/orders/${user?.id}`} className='u__inherited-anchor'>
+						<a
+							href={`/orders/sales/${user?.id}`}
+							className='u__inherited-anchor'
+						>
 							<DropdownMenuItem className='cursor-pointer'>
-								{user?.role === roles.SALES
-									? "My Orders"
-									: user?.role === roles.PURCHASER
-									? "My Purchases"
-									: null}
+								Sales
+							</DropdownMenuItem>
+						</a>
+						<a
+							href={`/orders/purchases/${user?.id}`}
+							className='u__inherited-anchor'
+						>
+							<DropdownMenuItem className='cursor-pointer'>
+								Purchases
 							</DropdownMenuItem>
 						</a>
 						<Link href={`/`} className='u__inherited-anchor'>

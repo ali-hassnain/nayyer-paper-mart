@@ -10,7 +10,14 @@ import {
 	TableRow,
 } from "@/components/ui/shadcn/table";
 
-const TableWrapper = ({ caption, columns, data, footer }) => {
+const TableWrapper = ({
+	caption,
+	columns,
+	data,
+	footer,
+	onRowClick,
+	rowClassName,
+}) => {
 	return (
 		<Table>
 			{caption && <TableCaption>{caption}</TableCaption>}
@@ -25,7 +32,11 @@ const TableWrapper = ({ caption, columns, data, footer }) => {
 			</TableHeader>
 			<TableBody>
 				{data.map((row, rowIndex) => (
-					<TableRow key={rowIndex}>
+					<TableRow
+						key={rowIndex}
+						onClick={() => onRowClick?.(row)}
+						className={rowClassName}
+					>
 						{columns.map((col, colIndex) => (
 							<TableCell key={colIndex} className={col.className}>
 								{col.render

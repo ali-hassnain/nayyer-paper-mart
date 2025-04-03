@@ -36,10 +36,10 @@ const Tabs = ({
 				className='relative inline-grid items-center justify-center h-10 p-1 text-gray-500 bg-gray-100 rounded-lg select-none w-full'
 				style={{
 					display: "grid",
-					gridTemplateColumns: `repeat(${tabs.length}, 1fr)`,
+					gridTemplateColumns: `repeat(${tabs?.length}, 1fr)`,
 				}}
 			>
-				{tabs.map((tab, index) => (
+				{tabs?.map((tab, index) => (
 					<button
 						key={index}
 						ref={(el) => (tabButtonsRef.current[index] = el)}
@@ -65,7 +65,7 @@ const Tabs = ({
 				className='relative w-full mt-2 content'
 				style={{ height: contentHeight }}
 			>
-				{tabs.map((tab, index) => (
+				{tabs?.map((tab, index) => (
 					<div
 						key={index}
 						style={{

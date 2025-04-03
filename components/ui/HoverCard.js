@@ -1,47 +1,48 @@
+"use client";
 import React, { useState, useRef } from "react";
 
 export default function HoverCard({
-	children, // The element that triggers the hover card.
-	content, // The content to display in the hover card.
-	delay = 600, // Delay (in ms) before showing the card.
-	leaveDelay = 500, // Delay (in ms) before hiding the card.
-	className = "", // Additional classes for the wrapper.
-	contentClassName = "", // Additional classes for the content container.
+	children,
+	content,
+	delay = 200,
+	leaveDelay = 150,
+	className = "",
+	contentClassName = "",
 }) {
-	const [hovered, setHovered] = useState(false);
-	const enterTimeout = useRef(null);
-	const leaveTimeout = useRef(null);
+	const [isVisible, setIsVisible] = useState(false);
+	const timeoutRef = useRef(null);
 
-	const handleMouseEnter = () => {
-		if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
-		if (!hovered) {
-			enterTimeout.current = setTimeout(() => {
-				setHovered(true);
-			}, delay);
-		}
+	const showCard = () => {
+		clearTimeout(timeoutRef.current);
+		timeoutRef.current = setTimeout(() => setIsVisible(true), delay);
 	};
 
-	const handleMouseLeave = () => {
-		if (enterTimeout.current) clearTimeout(enterTimeout.current);
-		if (hovered) {
-			leaveTimeout.current = setTimeout(() => {
-				setHovered(false);
-			}, leaveDelay);
-		}
+	const hideCard = () => {
+		clearTimeout(timeoutRef.current);
+		timeoutRef.current = setTimeout(() => setIsVisible(false), leaveDelay);
 	};
 
 	return (
 		<div
-			className={`relative ${className}`}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
+			className={`relative inline-block ${className}`}
+			onMouseEnter={showCard}
+			onMouseLeave={hideCard}
 		>
 			{children}
-			{hovered && (
+			{isVisible && (
 				<div
-					className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-4 bg-white shadow border border-gray-200 rounded z-50 ${contentClassName}`}
+					className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+            bg-white shadow-lg border border-gray-200 rounded-md z-[1000]
+            animate-fade-in-up ${contentClassName}`}
 				>
-					{content}
+					<div className='relative p-2 text-sm text-gray-600'>
+						{content}
+						<div
+							className='absolute top-full left-1/2 -translate-x-1/2
+              w-2 h-2 bg-white border-b border-r border-gray-200 rotate-45
+              -mt-1'
+						/>
+					</div>
 				</div>
 			)}
 		</div>

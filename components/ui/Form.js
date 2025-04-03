@@ -44,6 +44,7 @@ const Form = ({
 								pattern,
 								defaultValue,
 								options,
+								disabled = false,
 							} = elem;
 
 							return (
@@ -75,17 +76,22 @@ const Form = ({
 																placeholder={placeholder}
 																defaultValue={defaultValue || ""}
 																{...register(name, {
-																	required: required
+																	required: required?.value
 																		? required.message
-																		: required,
-																	pattern: pattern || null,
+																		: false,
+																	pattern: pattern?.value
+																		? {
+																				value: new RegExp(pattern.value),
+																				message: pattern.message,
+																		  }
+																		: undefined,
+																	validate: elem.validate,
 																})}
 															></textarea>
 														);
 													case "text":
 													case "email":
 													case "password":
-													case "number":
 													case "date":
 														return (
 															<input
@@ -97,11 +103,82 @@ const Form = ({
 																placeholder={placeholder}
 																defaultValue={defaultValue || ""}
 																{...register(name, {
-																	required: required
+																	required: required?.value
 																		? required.message
-																		: required,
-																	pattern: pattern || null,
+																		: false,
+																	pattern: pattern?.value
+																		? {
+																				value: new RegExp(pattern.value),
+																				message: pattern.message,
+																		  }
+																		: undefined,
+																	validate: elem.validate,
 																})}
+																disabled={disabled}
+															/>
+														);
+													case "number":
+														return (
+															<input
+																className={`c__form__input ${
+																	errors[name] ? `c__form__input--error` : ``
+																}`}
+																name={name}
+																type='number'
+																placeholder={placeholder}
+																step={elem.step || "1"} // Default to step=1 if not specified
+																inputMode={elem.inputMode || "decimal"}
+																pattern={elem.pattern || "^\\d+(\\.\\d{0,2})?$"} // Allow up to 2 decimals
+																defaultValue={
+																	defaultValue
+																		? Number(defaultValue).toFixed(2)
+																		: ""
+																}
+																{...register(name, {
+																	required: required?.value
+																		? required.message
+																		: false,
+																	pattern: {
+																		value: new RegExp(
+																			elem.pattern || "^\\d+(\\.\\d{0,2})?$"
+																		),
+																		message:
+																			elem.pattern?.message ||
+																			"Maximum 2 decimal places allowed",
+																	},
+																	validate: elem.validate,
+																	valueAsNumber: true,
+																	min: elem.min?.value
+																		? {
+																				value: elem.min.value,
+																				message: elem.min.message,
+																		  }
+																		: undefined,
+																	max: elem.max?.value
+																		? {
+																				value: elem.max.value,
+																				message: elem.max.message,
+																		  }
+																		: undefined,
+																})}
+																disabled={disabled}
+																onKeyDown={(e) => {
+																	// Allow numbers, single decimal point, and control keys
+																	if (
+																		!/[0-9]|\.|Backspace|Delete|Arrow/.test(
+																			e.key
+																		)
+																	) {
+																		e.preventDefault();
+																	}
+																	// Prevent multiple decimal points
+																	if (
+																		e.key === "." &&
+																		e.currentTarget.value.includes(".")
+																	) {
+																		e.preventDefault();
+																	}
+																}}
 															/>
 														);
 													case "select":
@@ -112,9 +189,16 @@ const Form = ({
 																}`}
 																name={name}
 																{...register(name, {
-																	required: required
+																	required: required?.value
 																		? required.message
-																		: required,
+																		: false,
+																	pattern: pattern?.value
+																		? {
+																				value: new RegExp(pattern.value),
+																				message: pattern.message,
+																		  }
+																		: undefined,
+																	validate: elem.validate,
 																})}
 															>
 																<option value=''>Select an option</option>
@@ -136,61 +220,45 @@ const Form = ({
 																name={name}
 																control={control}
 																rules={{
-																	required: required?.value || false,
-																	validate: (value) => {
-																		if (
-																			required?.value &&
-																			(!value || value.length === 0)
-																		) {
-																			return required.message;
-																		}
-																		return true;
-																	},
+																	required: required?.value
+																		? required.message
+																		: false,
+																	validate: elem.validate,
 																}}
-																render={({ field, fieldState }) => (
-																	<div className='c__form__field'>
-																		<FileUploader
-																			onValueChange={(files) =>
-																				field.onChange(files)
-																			}
-																			multiple={elem.multiple}
-																			maxFileCount={elem.multiple ? 10 : 1}
-																			required={required?.value}
-																			bucketName={elem.bucketName}
-																		/>
-																		{fieldState.error && (
-																			<div className='c__form__error'>
-																				{fieldState.error.message}
-																			</div>
-																		)}
-																	</div>
-																)}
+																render={({ field }) => {
+																	return (
+																		<div className='c__form__field'>
+																			<FileUploader
+																				onValueChange={(files) => {
+																					field.onChange(files);
+																				}}
+																				multiple={elem.multiple}
+																				maxFileCount={elem.multiple ? 10 : 1}
+																				required={required?.value}
+																				accept={elem.accept}
+																				bucketName={elem.bucketName}
+																			/>
+																		</div>
+																	);
+																}}
 															/>
 														);
-													// case "image":
-													//     return (
-													//         <input
-													//             className={`c__form__input ${
-													//                 errors[name] ? `c__form__input--error` : ``
-													//             }`}
-													//             name={name}
-													//             type="file"
-													//             accept="image/*"
-													//             {...register(name, {
-													//                 required: required ? required.message : required,
-													//             })}
-													//         />
-													//     );
 													case "map":
 														return (
 															<Controller
 																name={name}
 																control={control}
 																rules={{
-																	required: required
+																	required: required?.value
 																		? required.message
-																		: required,
-																	pattern: pattern || null,
+																		: false,
+																	pattern: pattern?.value
+																		? {
+																				value: new RegExp(pattern.value),
+																				message: pattern.message,
+																		  }
+																		: undefined,
+																	validate: elem.validate,
 																}}
 																render={({ field: { onChange, value } }) => (
 																	<MapWithPlacesField
@@ -207,20 +275,6 @@ const Form = ({
 																)}
 															/>
 														);
-													// case "map":
-													//     return(
-													//         <MapWithPlacesField
-													//             className={`c__form__input ${
-													//             errors[name] ? `c__form__input--error` : ``
-													//         }`}
-													//             name={name}
-													//             placeholder={placeholder}
-													//             defaultValue={defaultValue || ""}
-													//             {...register(name, {
-													//                 required: required ? required.message : required,
-													//                 pattern: pattern || null,
-													//             })}/>
-													//     )
 													case "area-search":
 														return (
 															<AreaSearch
@@ -231,10 +285,16 @@ const Form = ({
 																placeholder={placeholder}
 																defaultValue={defaultValue || ""}
 																{...register(name, {
-																	required: required
+																	required: required?.value
 																		? required.message
-																		: required,
-																	pattern: pattern || null,
+																		: false,
+																	pattern: pattern?.value
+																		? {
+																				value: new RegExp(pattern.value),
+																				message: pattern.message,
+																		  }
+																		: undefined,
+																	validate: elem.validate,
 																})}
 															/>
 														);
@@ -244,9 +304,10 @@ const Form = ({
 																name={name}
 																control={control}
 																rules={{
-																	required: required
+																	required: required?.value
 																		? required.message
-																		: required,
+																		: false,
+																	validate: elem.validate,
 																}}
 																render={({ field }) => (
 																	<AsyncPaginate
@@ -263,6 +324,7 @@ const Form = ({
 																			if (elem.onChange)
 																				elem.onChange(selectedOption);
 																		}}
+																		isClearable={true}
 																		value={field.value}
 																		inputValue={field.inputValue}
 																		classNamePrefix='react-select'
@@ -298,14 +360,13 @@ const Form = ({
 						})}
 					</div>
 					{buttonTitle && (
-						<div className={`c__form__button - wrapper `}>
+						<div className='sticky bottom-[-16px] bg-white z-10 border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'>
 							<Button
 								actionable
 								title={buttonTitle}
 								type='submit'
 								isLoading={payloadPosting}
-								// isDisabled={!isValid}
-								className={`${buttonClass}`}
+								className={`${buttonClass} w-full`}
 							/>
 						</div>
 					)}

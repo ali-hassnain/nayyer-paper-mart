@@ -1,6 +1,6 @@
 import { createClient } from "@/supabase/client";
 const supabase = createClient();
-import { loginPageUrl } from "../lib/constants";
+import { loginPageUrl, supabaseStorageBucketURL } from "@/lib/constants";
 
 export async function POST__signOut() {
 	const { error } = await supabase.auth.signOut();
@@ -10,9 +10,9 @@ export async function POST__signOut() {
 	return error;
 }
 
-export async function POST__addGarage(payload) {
+export async function POST__addCustomer(payload) {
 	const { data, error } = await supabase
-		.from("garages")
+		.from("customers")
 		.insert(payload)
 		.select();
 	return { data, error };
@@ -22,8 +22,12 @@ export async function POST__uploadFile(file, bucketName, filePath) {
 	console.log("Uploading file to:", bucketName, filePath);
 	const { data, error } = await supabase.storage
 		.from(bucketName)
-		.upload(filePath, file);
-	return { data, error };
+		.upload(filePath, file, {
+			cacheControl: "3600",
+			contentType: file.type,
+		});
+	const publicUrl = `${supabaseStorageBucketURL}/object/public/${bucketName}/${data.path}`;
+	return { data, error, url: publicUrl };
 }
 
 export async function PATCH__updateOrder({ orderId, updatePayload }) {
@@ -32,6 +36,5 @@ export async function PATCH__updateOrder({ orderId, updatePayload }) {
 		.update(updatePayload)
 		.eq("id", orderId)
 		.select();
-
 	return { data, error };
 }

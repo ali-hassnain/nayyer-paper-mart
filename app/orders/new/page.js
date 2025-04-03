@@ -4,231 +4,284 @@ import AuthCard from "@/components/ui/AuthCard";
 import Form from "@/components/ui/Form";
 import Bounded from "@/components/wrappers/Bounded";
 import Container from "@/components/wrappers/Container";
-import { SCHEMA__PartOrderForm } from "@/lib/schema";
 import { useForm } from "react-hook-form";
 import { createClient } from "@/supabase/client";
 import { useAppContext } from "@/context/AppWrapper";
 import Button from "@/components/ui/Button";
-import AddGarageFormModal from "@/components/ui/AddGarageFormModal";
 import { usePaginatedOptions } from "@/lib/hooks/usePaginatedOptions";
 import { toast } from "sonner";
-import { imageUploadProcess } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
-import { purchaserStatus, supabaseStorageBucketURL } from "@/lib/constants";
+import AddCustomerFormModal from "@/components/ui/AddCustomerFormModal";
+import { orderStatus, paperTypeConstant } from "@/lib/constants";
+import { calculateBalances } from "@/lib/helpers";
 
 const CreateOrderForm = () => {
 	const { user } = useAppContext();
-	const userId = user?.data?.user?.id;
 	const {
 		register,
 		handleSubmit,
 		control,
-		reset,
-		formState: { errors },
-		formState: { isValid },
-		setValue,
-	} = useForm({
-		mode: "all",
-	});
+		formState: { errors, isValid },
+		watch,
+		trigger,
+	} = useForm({ mode: "onChange", reValidateMode: "onChange" });
+
+	const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 	const [formMessage, setFormMessage] = useState(null);
 	const [payloadPosting, setPayloadPosting] = useState(false);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [dependencies, setDependencies] = useState({
-		makeId: null,
-		variantId: null,
-	});
 	const { loadOptions, updatePage } = usePaginatedOptions();
 	const router = useRouter();
+	const supabase = createClient();
 
-	const makeLoader = useCallback(
-		(search, loadedOptions, { page }) => loadOptions("makes", search),
+	const customerLoader = useCallback(
+		(search, _, { page } = {}) => loadOptions("customers", search),
 		[loadOptions]
 	);
 
-	const variantLoader = useCallback(
-		(search, loadedOptions, { page }) =>
-			loadOptions("variants", search, dependencies.makeId),
-		[loadOptions, dependencies.makeId]
-	);
-
-	const yearLoader = useCallback(
-		(search, loadedOptions, { page }) =>
-			loadOptions("model_years", search, dependencies.variantId),
-		[loadOptions, dependencies.variantId]
-	);
-
-	const garageLoader = useCallback(
-		(search, prevOptions, additional) =>
-			loadOptions("garages", search, null, additional),
+	const partnerLoader = useCallback(
+		(search, _, { page } = {}) => loadOptions("partners", search),
 		[loadOptions]
 	);
 
-	const handleMakeChange = (selectedOption) => {
-		const newMakeId = selectedOption?.value || null;
-		setDependencies({
-			makeId: newMakeId,
-			variantId: null,
-		});
-		setValue("variant", null);
-		setValue("model_year", null);
+	const [partner, partnerShare] = watch(["partner", "partner_share"]);
+
+	useEffect(() => {
+		trigger("partner");
+		trigger("partner_share");
+	}, [partner, partnerShare, trigger]);
+
+	const validatePartner = (value) => {
+		if (partnerShare && !value?.value) {
+			return "Partner required when share is entered";
+		}
+		return true;
 	};
 
-	const handleVariantChange = (selectedOption) => {
-		const newVariantId = selectedOption?.value || null;
-		setDependencies((prev) => ({
-			...prev,
-			variantId: newVariantId,
-		}));
-		setValue("model_year", null);
-	};
-
-	const handleFileUploads = async (formData) => {
-		const uploadPromises = [];
-		const results = {};
-		if (formData.mulkiya_chassis?.[0]) {
-			uploadPromises.push(
-				new Promise(async (resolve) => {
-					const signedURL = await imageUploadProcess({
-						files: formData.mulkiya_chassis,
-						userId,
-						bucketName: "mulkiya",
-						storageBucketURL: supabaseStorageBucketURL,
-						onProgressUpdate: (file, progress) =>
-							console.log(`${file.name}: ${progress}%`),
-						onFileUploaded: (fileData) => {
-							results.mulkiya_chassis = fileData.src;
-						},
-						onCompletion: () => {},
-						onError: (file, message) => toast.error(`${file.name}: ${message}`),
-					})();
-					resolve(signedURL);
-				})
-			);
+	const validatePartnerShare = (value) => {
+		if (partner?.value && !value) {
+			return "Partner share is required when partner is selected";
 		}
-		if (formData.part_pictures?.length) {
-			uploadPromises.push(
-				new Promise(async (resolve) => {
-					const signedURLs = await imageUploadProcess({
-						files: formData.part_pictures,
-						userId,
-						bucketName: "request-images",
-						storageBucketURL: supabaseStorageBucketURL,
-						onProgressUpdate: (file, progress) =>
-							console.log(`${file.name}: ${progress}%`),
-						onFileUploaded: (fileData) => {
-							results.part_pictures = [
-								...(results.part_pictures || []),
-								fileData.src,
-							];
-						},
-						onCompletion: () => {},
-						onError: (file, message) => toast.error(`${file.name}: ${message}`),
-					})();
-					resolve(signedURLs);
-				})
-			);
+		if (value && !partner?.value) {
+			return "Cannot have partner share without selecting a partner";
 		}
-		await Promise.all(uploadPromises);
-		return results;
+		if (partner?.value && (value < 0 || value > 100)) {
+			return "Partner share must be between 0-100%";
+		}
+		return true;
 	};
 
 	const formSchema = useMemo(
-		() =>
-			SCHEMA__PartOrderForm({
-				makeLoader,
-				variantLoader,
-				yearLoader,
-				garageLoader,
-				handleMakeChange,
-				handleVariantChange,
-				isVariantDisabled: !dependencies.makeId,
-				isYearDisabled: !dependencies.variantId,
-				updatePage,
-			}),
-		[makeLoader, variantLoader, yearLoader, dependencies]
+		() => [
+			{
+				name: "order_type",
+				label: "Order Type",
+				type: "select",
+				width: "full",
+				required: { value: true, message: "Order type is required" },
+				options: [
+					{ value: "purchase", label: "Purchase" },
+					{ value: "sale", label: "Sale" },
+				],
+			},
+			{
+				name: "product_name",
+				label: "Product Name",
+				type: "text",
+				width: "full",
+				required: { value: true, message: "Product name is required" },
+				placeholder: "Enter product name",
+			},
+			{
+				name: "length",
+				label: "Length (inch)",
+				type: "number",
+				width: "half",
+				required: { value: true, message: "Length is required" },
+				placeholder: "Enter length",
+			},
+			{
+				name: "width",
+				label: "Width (inch)",
+				type: "number",
+				width: "half",
+				required: { value: true, message: "Width is required" },
+				placeholder: "Enter width",
+			},
+			{
+				name: "weight_per_sheet",
+				label: "Weight/Sheet (g)",
+				type: "number",
+				width: "half",
+				required: { value: true, message: "Weight per sheet is required" },
+				placeholder: "Enter weight per sheet",
+			},
+			{
+				name: "rate",
+				label: "Rate/kg",
+				type: "number",
+				width: "half",
+				required: { value: true, message: "Rate is required" },
+				placeholder: "Enter rate",
+			},
+			{
+				name: "quantity",
+				label: "Quantity",
+				type: "number",
+				width: "half",
+				required: { value: true, message: "Quantity is required" },
+				placeholder: "Enter quantity",
+			},
+			{
+				name: "paper_type",
+				label: "Paper Type",
+				type: "select",
+				width: "full",
+				required: { value: true, message: "Paper type is required" },
+				options: [
+					{ value: "paper", label: "Paper" },
+					{ value: "card", label: "Card" },
+				],
+			},
+			{
+				name: "customer",
+				label: "Customer",
+				type: "async-paginate",
+				width: "full",
+				required: { value: true, message: "Customer is required" },
+				loadOptions: customerLoader,
+				additional: { page: 1 },
+				handlePagination: () => updatePage("customers"),
+			},
+			{
+				name: "partner",
+				label: "Partner",
+				type: "async-paginate",
+				width: "full",
+				required: false,
+				loadOptions: partnerLoader,
+				additional: { page: 1 },
+				handlePagination: () => updatePage("partners"),
+				validate: validatePartner,
+			},
+			{
+				name: "partner_share",
+				label: "Partner Share (%)",
+				type: "number",
+				width: "half",
+				required: false,
+				placeholder: "Enter partner share",
+				validate: validatePartnerShare,
+				min: { value: 0, message: "Must be at least 0%" },
+				max: { value: 100, message: "Cannot exceed 100%" },
+				disabled: !partner?.value,
+			},
+		],
+		[partner]
 	);
-
-	const supabase = createClient();
 
 	const onSubmit = async (formData) => {
 		setPayloadPosting(true);
 		setFormMessage(null);
 		try {
-			const uploadedData = await handleFileUploads(formData);
-			if (
-				!uploadedData.mulkiya_chassis &&
-				(!uploadedData.part_pictures || uploadedData.part_pictures.length === 0)
-			) {
-				throw new Error(
-					"No images uploaded. Please upload at least one image."
-				);
-			}
-			const payloadToCreateOrder = {
-				part_name: formData.part_name,
-				vehicle_make: formData.make.label,
-				garage: formData.garage_name.value,
-				parts_images: uploadedData?.part_pictures,
-				variant: formData.variant.label,
-				model: formData.model_year.label,
-				chassis_pic: [uploadedData?.mulkiya_chassis],
-				status: purchaserStatus.OPEN,
+			const payload = {
+				created_by: user?.data?.user?.id,
+				product_name: formData.product_name,
+				length: formData.length,
+				width: formData.width,
+				weight: formData.weight_per_sheet,
+				rate: formData.rate,
+				quantity: formData.quantity,
+				customer: formData.customer.value,
+				order_type: formData.order_type,
+				partner: formData.partner?.value || null,
+				partner_share: formData.partner?.value ? formData.partner_share : null,
+				paper_type: formData.paper_type,
+				status: orderStatus.PENDING,
+				total_bill: calculateBalances({
+					length: formData.length,
+					width: formData.width,
+					weight_per_sheet: formData.weight_per_sheet,
+					rate: formData.rate,
+					quantity: formData.quantity,
+					paper_type: formData.paper_type,
+					partnerShare: formData.partner_share,
+				}).totalBalance,
+				total_balance: calculateBalances({
+					length: formData.length,
+					width: formData.width,
+					weight_per_sheet: formData.weight_per_sheet,
+					rate: formData.rate,
+					quantity: formData.quantity,
+					paper_type: formData.paper_type,
+					partnerShare: formData.partner_share,
+				}).totalBalance,
+				partner_balance: calculateBalances({
+					length: formData.length,
+					width: formData.width,
+					weight_per_sheet: formData.weight_per_sheet,
+					rate: formData.rate,
+					quantity: formData.quantity,
+					paper_type: formData.paper_type,
+					partnerShare: formData.partner_share,
+				}).partnerBalance,
+				user_balance: calculateBalances({
+					length: formData.length,
+					width: formData.width,
+					weight_per_sheet: formData.weight_per_sheet,
+					rate: formData.rate,
+					quantity: formData.quantity,
+					paper_type: formData.paper_type,
+					partnerShare: formData.partner_share,
+				}).userBalance,
 			};
-			if (
-				!payloadToCreateOrder.parts_images?.length &&
-				!payloadToCreateOrder.chassis_pic?.length
-			) {
-				throw new Error("Image upload failed. Please try again.");
-			}
+
 			const { data, error } = await supabase
 				.from("orders")
-				.insert([payloadToCreateOrder])
+				.insert([payload])
 				.select();
-			if (error) {
-				throw new Error(`Error: ${error.message}`);
-			}
-			setPayloadPosting(false);
+
+			if (error) throw error;
+
 			setFormMessage({
 				type: "success",
-				message: "Order created successfully.",
+				message: "Order created successfully!",
 			});
-			setTimeout(() => {
-				router.push("/");
-			}, 1000);
+			setTimeout(
+				() => router.push(`/dashboard?orderType=${formData.order_type}`),
+				500
+			);
 		} catch (error) {
-			console.error("❌ Order Submission Error:", error);
-			setPayloadPosting(false);
-			setFormMessage({
-				type: "error",
-				message: error.message,
-			});
+			setFormMessage({ type: "error", message: error.message });
+			toast.error("Order creation failed: " + error.message);
 		} finally {
+			setPayloadPosting(false);
 		}
 	};
 
 	return (
-		<div className={"overflow-y-scroll h-[100%]"}>
-			<Bounded className='b__auth__variant01 b__size-sm u__background-light '>
+		<div className='overflow-y-scroll h-[100%]'>
+			<Bounded className='b__auth__variant01 b__size-sm u__background-light'>
 				<Container>
-					<AddGarageFormModal
-						isModalOpen={isModalOpen}
-						setIsModalOpen={setIsModalOpen}
+					<AddCustomerFormModal
+						isModalOpen={isCustomerModalOpen}
+						setIsModalOpen={setIsCustomerModalOpen}
 					/>
 					<div className='flex flex-row-reverse mb-4'>
 						<Button
 							actionable={true}
-							title={`Add Garage`}
-							onClick={() => setIsModalOpen(true)}
+							title={`Add Customer`}
+							onClick={() => setIsCustomerModalOpen(true)}
 						/>
 					</div>
 					<div className='mx-auto'>
-						<AuthCard heading={`Create Order`} description={null}>
+						<AuthCard heading='Create New Order' description={null}>
 							<Form
 								isValid={isValid}
 								formFields={formSchema}
 								register={register}
 								errors={errors}
 								control={control}
-								buttonTitle={`Save`}
+								buttonTitle='Create Order'
 								onSubmit={handleSubmit(onSubmit)}
 								payloadPosting={payloadPosting}
 								formMessage={formMessage}

@@ -8,7 +8,11 @@ const nextConfig = {
 	images: {
 		loader: "custom",
 		loaderFile: "components/ui/ImageLoader.js",
-		domains: ["pilbtvgsiokkqzhmtzpn.supabase.co", "placehold.co"],
+		domains: [
+			"ldlzngzvtjtegewoujdz.supabase.co",
+			"placehold.co",
+			"unsplash.com",
+		],
 	},
 };
 
