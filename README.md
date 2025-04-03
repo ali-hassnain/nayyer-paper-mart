@@ -5,7 +5,7 @@
 ```bash
 # From Source
 git clone 
-cd mujmua
+cd nayyer-paper-mart
 ```
 
 then install dependencies
