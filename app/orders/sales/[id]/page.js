@@ -216,7 +216,7 @@ const UserOrders = () => {
 		},
 		{
 			header: "Order Date",
-			accessor: "created_at",
+			accessor: "order_date",
 			render: (value) => format(new Date(value), "do MMMM, yyyy h:mm a"),
 			className: "min-w-[160px]",
 		},

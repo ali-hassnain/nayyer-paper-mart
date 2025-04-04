@@ -26,7 +26,7 @@ export const GET__orders = async (params = {}) => {
 		let query = supabase
 			.from("orders")
 			.select("*")
-			.order("created_at", { ascending: false });
+			.order("order_date", { ascending: false });
 
 		if (params.orderType) {
 			query = query.eq("order_type", params.orderType);
@@ -35,8 +35,8 @@ export const GET__orders = async (params = {}) => {
 		// Add date range filter correctly
 		if (params.startDate && params.endDate) {
 			query = query
-				.gte("created_at", params.startDate)
-				.lte("created_at", params.endDate);
+				.gte("order_date", params.startDate)
+				.lte("order_date", params.endDate);
 		}
 
 		const { data, error } = await query;

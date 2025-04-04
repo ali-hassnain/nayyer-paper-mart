@@ -119,14 +119,12 @@ const PurchaseOrderTable = ({
 			.map(([customerId, orders]) => ({
 				customerId,
 				orders: orders.sort(
-					(a, b) =>
-						new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+					(a, b) => new Date(b.order_date) - new Date(a.order_date) // Descending by order_date
 				),
 			}))
 			.sort(
 				(a, b) =>
-					new Date(b.orders[0].created_at).getTime() -
-					new Date(a.orders[0].created_at).getTime()
+					new Date(b.orders[0].order_date) - new Date(a.orders[0].order_date) // Sort groups by latest order_date
 			);
 	}, [purchaseOrders]);
 
