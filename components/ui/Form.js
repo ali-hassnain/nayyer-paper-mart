@@ -7,6 +7,9 @@ import AreaSearch from "./AreaSearch";
 import { Controller } from "react-hook-form";
 import { AsyncPaginate } from "react-select-async-paginate";
 import FileUploader from "@/components/ui/FileUploader";
+import DatePicker from "react-datepicker";
+import 'react-datepicker/dist/react-datepicker.css';
+
 
 const Form = ({
 	formFields,
@@ -92,7 +95,6 @@ const Form = ({
 													case "text":
 													case "email":
 													case "password":
-													case "date":
 														return (
 															<input
 																className={`c__form__input ${
@@ -115,6 +117,38 @@ const Form = ({
 																	validate: elem.validate,
 																})}
 																disabled={disabled}
+															/>
+														);
+													case "date":
+													case "datetime":
+														return (
+															<Controller
+																name={name}
+																control={control}
+																defaultValue={defaultValue || new Date()}
+																rules={{
+																	required: required?.value ? required.message : false,
+																	validate: elem.validate,
+																}}
+																render={({ field }) => (
+																	<DatePicker
+																		selected={field.value || new Date()}
+																		onChange={(date) => field.onChange(date)}
+																		showTimeSelect
+																		timeFormat="HH:mm"
+																		timeIntervals={15}
+																		timeCaption="Time"
+																		dateFormat="MMMM d, yyyy h:mm aa"
+																		className={`c__form__input ${
+																			errors[name] ? `c__form__input--error` : ``
+																		}`}
+																		placeholderText={placeholder}
+																		maxDate={new Date()}
+																		popperClassName="react-datepicker-popper"
+																		wrapperClassName="date-picker-wrapper"
+																		disabled={disabled}
+																	/>
+																)}
 															/>
 														);
 													case "number":

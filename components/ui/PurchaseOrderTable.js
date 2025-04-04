@@ -503,7 +503,7 @@ const PurchaseOrderTable = ({
 					amount: userAmount,
 					proof: userProof?.payment_proof?.[0] || null,
 					payment_by: "user",
-					payment_date: new Date().toISOString(),
+					user_payment_date: new Date(formData.user_payment_date).toISOString(),
 				},
 				...(currentOrder.partner && partnerAmount > 0
 					? [
@@ -512,7 +512,7 @@ const PurchaseOrderTable = ({
 								amount: partnerAmount,
 								proof: partnerProof?.payment_proof?.[0] || null,
 								payment_by: "partner",
-								payment_date: new Date().toISOString(),
+								partner_payment_date:new Date(formData.partner_payment_date).toISOString(),
 							},
 					  ]
 					: []),
@@ -694,7 +694,7 @@ const PurchaseOrderTable = ({
 													<p>Mode: {payment.payment_mode}</p>
 													<p>
 														Date:{" "}
-														{format(new Date(payment.payment_date), "PPpp")}
+														{format(new Date(payment.user_payment_date), "PPpp")}
 													</p>
 													{payment.proof && (
 														<a
@@ -737,7 +737,7 @@ const PurchaseOrderTable = ({
 														<p>Mode: {payment.payment_mode}</p>
 														<p>
 															Date:{" "}
-															{format(new Date(payment.payment_date), "PPpp")}
+															{format(new Date(payment.partner_payment_date), "PPpp")}
 														</p>
 														{payment.proof && (
 															<a

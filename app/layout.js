@@ -30,9 +30,6 @@ export default async function RootLayout({ children }) {
 					src='https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js'
 					strategy='beforeInteractive'
 				/>
-				<Script
-					src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_API_KEY}&libraries=places`}
-				/>
 			</head>
 			<body className={`${pacaembu.variable}`}>
 				<NextTopLoader

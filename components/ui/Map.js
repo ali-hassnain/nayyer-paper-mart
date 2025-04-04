@@ -42,7 +42,7 @@ const MapComponent = forwardRef(
 		const [isDragging, setIsDragging] = useState(false);
 
 		const { isLoaded } = useJsApiLoader({
-			googleMapsApiKey: process.env.NEXT_PUBLIC_MAPS_API_KEY,
+			// googleMapsApiKey: process.env.NEXT_PUBLIC_MAPS_API_KEY,
 		});
 
 		const handleMapClick = (event) => {
@@ -63,7 +63,7 @@ const MapComponent = forwardRef(
 					{
 						params: {
 							latlng: `${lat},${lng}`,
-							key: process.env.NEXT_PUBLIC_MAPS_API_KEY,
+							// key: process.env.NEXT_PUBLIC_MAPS_API_KEY,
 						},
 					}
 				);

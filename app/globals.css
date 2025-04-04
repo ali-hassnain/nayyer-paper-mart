@@ -41,3 +41,47 @@
 	text-overflow: ellipsis;
 	display: inline-block;
 }
+
+.react-datepicker {
+	font-family: inherit;
+	border: 1px solid #e5e7eb;
+}
+
+.react-datepicker__header {
+	background-color: #f3f4f6;
+}
+
+.react-datepicker__time-container {
+	width: 110px;
+}
+
+.react-datepicker__time-box {
+	width: 100% !important;
+}
+
+.react-datepicker__time-list-item {
+	padding: 8px 10px;
+}
+
+.date-picker-wrapper {
+	width: 100%;
+}
+
+.react-datepicker-popper {
+	z-index: 9999 !important;
+}
+
+.react-datepicker__time-container {
+	z-index: 9999 !important;
+}
+
+/* If using a custom wrapper class */
+.date-picker-wrapper {
+	position: relative;
+	z-index: 9999;
+}
+
+/* For the button container */
+.sticky.bottom {
+	z-index: 100; /* Lower than datepicker's z-index */
+}
