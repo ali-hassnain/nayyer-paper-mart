@@ -160,57 +160,50 @@ const Form = ({
 																name={name}
 																type='number'
 																placeholder={placeholder}
-																step={elem.step || "1"} // Default to step=1 if not specified
+																step="any" // Allow any decimal values
 																inputMode={elem.inputMode || "decimal"}
-																pattern={elem.pattern || "^\\d+(\\.\\d{0,2})?$"} // Allow up to 2 decimals
-																defaultValue={
-																	defaultValue
-																		? Number(defaultValue).toFixed(2)
-																		: ""
-																}
+																pattern={elem.pattern || "^\\d+(\\.\\d{0,2})?$"} // Allow 0-2 decimals
+																defaultValue={defaultValue} // Remove .toFixed(2) to preserve original format
 																{...register(name, {
-																	required: required?.value
-																		? required.message
-																		: false,
+																	required: required?.value ? required.message : false,
 																	pattern: {
-																		value: new RegExp(
-																			elem.pattern || "^\\d+(\\.\\d{0,2})?$"
-																		),
-																		message:
-																			elem.pattern?.message ||
-																			"Maximum 2 decimal places allowed",
+																		value: new RegExp(elem.pattern || "^\\d+(\\.\\d{0,2})?$"),
+																		message: elem.pattern?.message || "Maximum 2 decimal places allowed",
 																	},
 																	validate: elem.validate,
 																	valueAsNumber: true,
-																	min: elem.min?.value
-																		? {
-																				value: elem.min.value,
-																				message: elem.min.message,
-																		  }
-																		: undefined,
-																	max: elem.max?.value
-																		? {
-																				value: elem.max.value,
-																				message: elem.max.message,
-																		  }
-																		: undefined,
+																	min: elem.min?.value ? {
+																		value: elem.min.value,
+																		message: elem.min.message,
+																	} : undefined,
+																	max: elem.max?.value ? {
+																		value: elem.max.value,
+																		message: elem.max.message,
+																	} : undefined,
 																})}
 																disabled={disabled}
+																onWheel={(e) => {
+																	e.preventDefault();
+																	e.target.blur();
+																}}
 																onKeyDown={(e) => {
-																	// Allow numbers, single decimal point, and control keys
-																	if (
-																		!/[0-9]|\.|Backspace|Delete|Arrow/.test(
-																			e.key
-																		)
-																	) {
+																	const allowedKeys = [
+																		"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+																		".", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"
+																	];
+
+																	if (!allowedKeys.includes(e.key) && !e.metaKey) {
 																		e.preventDefault();
 																	}
-																	// Prevent multiple decimal points
-																	if (
-																		e.key === "." &&
-																		e.currentTarget.value.includes(".")
-																	) {
+																	const currentValue = e.currentTarget.value;
+																	if (e.key === "." && currentValue.includes(".")) {
 																		e.preventDefault();
+																	}
+																	if (currentValue.includes(".")) {
+																		const decimalPart = currentValue.split(".")[1];
+																		if (decimalPart?.length >= 2 && !["Backspace", "Delete", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+																			e.preventDefault();
+																		}
 																	}
 																}}
 															/>
