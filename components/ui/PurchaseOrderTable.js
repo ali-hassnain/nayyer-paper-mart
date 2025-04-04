@@ -133,7 +133,7 @@ const PurchaseOrderTable = ({
 	const orderColumns = [
 		{
 			header: "Order Date",
-			accessor: "created_at",
+			accessor: "order_date",
 			render: (value) => format(new Date(value), "PPpp"),
 		},
 		{

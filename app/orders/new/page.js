@@ -153,6 +153,19 @@ const CreateOrderForm = () => {
 				handlePagination: () => updatePage("customers"),
 			},
 			{
+				name: "order_date",
+				label: "Order Date",
+				type: "datetime",
+				required: { value: true, message: "User Payment date is required" },
+				defaultValue: new Date(),
+				validate: (value) => {
+					if (!value) return true;
+					const selectedDate = new Date(value);
+					const now = new Date();
+					return selectedDate <= now || "Payment date cannot be in the future";
+				}
+			},
+			{
 				name: "partner",
 				label: "Partner",
 				type: "async-paginate",
@@ -233,6 +246,7 @@ const CreateOrderForm = () => {
 					paper_type: formData.paper_type,
 					partnerShare: formData.partner_share,
 				}).userBalance,
+				order_date:formData.order_date
 			};
 
 			const { data, error } = await supabase

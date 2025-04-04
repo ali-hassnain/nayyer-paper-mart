@@ -1,10 +1,8 @@
-
-
 ## Installing
 
 ```bash
 # From Source
-git clone 
+git clone
 cd nayyer-paper-mart
 ```
 
