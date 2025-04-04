@@ -1,11 +1,11 @@
-Frontend for ([swoop parts](https://mujmua.vercel.app/))
+
 
 ## Installing
 
 ```bash
 # From Source
-git clone https://github.com/mosibello/mujmua.git
-cd mujmua
+git clone 
+cd nayyer-paper-mart
 ```
 
 then install dependencies
