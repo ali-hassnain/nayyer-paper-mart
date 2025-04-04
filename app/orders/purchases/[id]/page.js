@@ -8,11 +8,11 @@ import TableWrapper from "@/components/ui/Table";
 import Container from "@/components/wrappers/Container";
 import EmptyState from "@/components/ui/EmptyState";
 import { Inbox } from "lucide-react";
-import { format, startOfDay } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 import HoverCard from "@/components/ui/HoverCard";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { formatCurrency } from "@/lib/helpers";
+import { formatCurrency, toLocalISOString } from "@/lib/helpers";
 
 const StatusBadge = ({ status }) => {
 	const statusConfig = {
@@ -116,10 +116,9 @@ const UserOrders = () => {
 		try {
 			const params = {
 				orderType: "purchase",
-				...(startDate && { startDate: startOfDay(startDate).toISOString() }),
-				...(endDate && { endDate: startOfDay(endDate).toISOString() }),
+				...(startDate && { startDate: toLocalISOString(startOfDay(startDate)) }),
+				...(endDate && { endDate: toLocalISOString(endOfDay(endDate)) }),
 			};
-
 			const { orders, error } = await GET__orders(params);
 			if (error) throw error;
 			if (!orders.length) return setOrders([]);
@@ -241,7 +240,7 @@ const UserOrders = () => {
 						/>
 						<DatePicker
 							selected={endDate}
-							onChange={(date) => setEndDate(date ? startOfDay(date) : null)}
+							onChange={(date) => setEndDate(date ? endOfDay(date) : null)}
 							selectsEnd
 							startDate={startDate}
 							endDate={endDate}
