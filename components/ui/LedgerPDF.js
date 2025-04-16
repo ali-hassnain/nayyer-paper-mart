@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { format } from "date-fns";
 import { removeUnderscores } from "@/lib/helpers";
+import {customerType} from "../../lib/constants";
 
 const styles = StyleSheet.create({
 	page: { padding: 30 },
@@ -19,7 +20,7 @@ const styles = StyleSheet.create({
 		fontSize: 10,
 	},
 	descCell: {
-		width: "12%",
+		width: "15%",
 		padding: 5,
 		borderStyle: "solid",
 		borderWidth: 1,
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
 });
 
 const LedgerPDF = ({ customer = {}, transactions = [] }) => {
+
 	const sortedTransactions = [...transactions].sort(
 		(a, b) => new Date(a?.date || 0) - new Date(b?.date || 0)
 	);
@@ -137,8 +139,8 @@ const LedgerPDF = ({ customer = {}, transactions = [] }) => {
 						<Text style={styles.qtyCell}>Qty</Text>
 						<Text style={styles.rateCell}>Rate</Text>
 						<Text style={styles.modeCell}>Mode</Text>
-						<Text style={styles.debitCell}>Debit</Text>
-						<Text style={styles.creditCell}>Credit</Text>
+						<Text style={styles.debitCell}>Bill</Text>
+						<Text style={styles.creditCell}>{customer.customer_type === customerType.BUYER ? "Credit" : "Debit"}</Text>
 						<Text style={styles.balanceCell}>Balance</Text>
 					</View>
 
@@ -161,6 +163,7 @@ const LedgerPDF = ({ customer = {}, transactions = [] }) => {
 					</View>
 
 					{sortedTransactions.map((transaction) => {
+
 						const amount = transaction?.amount || 0;
 						const transactionType = transaction?.type || "payment";
 						runningBalance += transactionType === "order" ? amount : -amount;
@@ -177,7 +180,7 @@ const LedgerPDF = ({ customer = {}, transactions = [] }) => {
 								</Text>
 
 								<Text style={styles.descCell}>
-									{transactionType === "order" ? "Sale" : "Payment"}
+									{transaction.type === "payment" ? transaction.payment_mode : ""}
 								</Text>
 
 								<Text style={styles.dimensionsCell}>
