@@ -2,111 +2,88 @@
 import React, { useEffect, useState } from "react";
 import Bounded from "@/components/wrappers/Bounded";
 import Container from "@/components/wrappers/Container";
-import { useAppContext } from "@/context/AppWrapper";
-import { redirect, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Tabs from "@/components/ui/Tabs";
 import Button from "@/components/ui/Button";
-import { Package } from "lucide-react";
-import EmptyState from "@/components/ui/EmptyState";
-import PurchaseOrderTable from "@/components/ui/PurchaseOrderTable";
+import CustomerOrderTable from "@/components/ui/CustomerOrderTable";
 import { orderType } from "@/lib/constants";
-import { GET__orders } from "@/services/queries-csr";
 import Spinner from "@/components/ui/Spinner";
+import { GET__customers } from "@/services/queries-csr";
+import { customerType } from "@/lib/constants";
 
 const Dashboard = () => {
-	const [activeTab, setActiveTab] = useState(0);
-	const [orders, setOrders] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const { user } = useAppContext();
-	const userId = user?.data?.user?.id;
+	const [activeTab, setActiveTab] = useState(null);
+	const [customers, setCustomers] = useState({});
+	const [loadingCustomers, setLoadingCustomers] = useState(true);
 	const searchParams = useSearchParams();
 
-	useEffect(() => {
-		if (!userId) {
-			redirect("/");
+	const fetchAllCustomers = async () => {
+		try {
+			setLoadingCustomers(true);
+			const customerTypeKey =
+				activeTab === 0 ? customerType.SUPPLIER : customerType.BUYER;
+			const { data: allCustomers, error } =
+				await GET__customers.getAllCustomers({
+					customer_type: customerTypeKey,
+				});
+			if (error) throw error;
+			const customersMap = allCustomers.reduce(
+				(acc, customer) => ({
+					...acc,
+					[customer.id]: customer,
+				}),
+				{}
+			);
+			setCustomers(customersMap);
+		} catch (error) {
+			console.error("Error fetching customers:", error);
+		} finally {
+			setLoadingCustomers(false);
 		}
-		fetchOrders(orderType.PURCHASE);
-	}, [user]);
+	};
+
+	useEffect(() => {
+		if (activeTab >= 0 && activeTab !== null) {
+			fetchAllCustomers();
+		}
+	}, [activeTab]);
 
 	useEffect(() => {
 		const orderTypeParam = searchParams.get("orderType");
-		setActiveTab(orderTypeParam === "sale" ? 1 : 0);
-		fetchOrders(orderTypeParam);
+		const newActiveTab = orderTypeParam === "sale" ? 1 : 0;
+		setActiveTab(newActiveTab);
 	}, [searchParams]);
-
-	useEffect(() => {
-		const statusParam = getStatusParam(activeTab);
-		fetchOrders(statusParam);
-	}, [activeTab]);
-
-	const getStatusParam = (tabIndex) => {
-		if (tabIndex === 0) return orderType.PURCHASE;
-		if (tabIndex === 1) return orderType.SALE;
-		return null;
-	};
-
-	const fetchOrders = async (orderType) => {
-		setLoading(true);
-		try {
-			const { orders: ordersData, error } = await GET__orders({ orderType });
-			if (error) {
-				console.error("Error fetching orders:", error);
-			} else {
-				setOrders(ordersData);
-			}
-		} catch (error) {
-			console.error("Error:", error);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const ordersTabData = [
 		{
-			label: "Purchase Orders",
+			label: "Suppliers",
 			content: (
 				<div className='p-4'>
-					{loading ? (
+					{loadingCustomers ? (
 						<Spinner />
-					) : orders && orders.length > 0 ? (
-						<PurchaseOrderTable
-							purchaseOrders={orders}
-							fetchOrders={fetchOrders}
-							setActiveTab={setActiveTab}
-							activeTab={activeTab}
-						/>
 					) : (
-						<EmptyState
-							title='No Purchase Orders'
-							description='You have no purchase orders at the moment.'
-							icon={<Package size={40} />}
-							actionText='Refresh'
-							onAction={() => fetchOrders(orderType.PURCHASE)}
+						<CustomerOrderTable
+							customers={customers}
+							loadingCustomers={loadingCustomers}
+							orderType={orderType.PURCHASE}
+							activeTab={activeTab}
 						/>
 					)}
 				</div>
 			),
 		},
 		{
-			label: "Sale Orders",
+			label: "Buyers",
 			content: (
 				<div className='p-4'>
-					{loading ? (
+					{loadingCustomers ? (
 						<Spinner />
-					) : orders && orders.length > 0 ? (
-						<PurchaseOrderTable
-							purchaseOrders={orders}
-							fetchOrders={fetchOrders}
-							setActiveTab={setActiveTab}
-							activeTab={activeTab}
-						/>
 					) : (
-						<EmptyState
-							title='No Sale Orders'
-							description='You have no sale orders at the moment.'
-							icon={<Package size={40} />}
-							actionText='Refresh'
-							onAction={() => fetchOrders(orderType.SALE)}
+						<CustomerOrderTable
+							customers={customers}
+							loadingCustomers={loadingCustomers}
+							orderType={orderType.SALE}
+							activeTab={activeTab}
 						/>
 					)}
 				</div>

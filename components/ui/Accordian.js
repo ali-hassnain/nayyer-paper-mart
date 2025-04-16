@@ -11,9 +11,17 @@ const AccordionWrapper = ({
 	type = "single",
 	collapsible = true,
 	className = "",
+	onValueChange,
+	...props
 }) => {
 	return (
-		<Accordion type={type} collapsible={collapsible} className={className}>
+		<Accordion
+			type={type}
+			collapsible={collapsible}
+			className={className}
+			onValueChange={onValueChange}
+			{...props}
+		>
 			{items.map((item, index) => (
 				<AccordionItem
 					key={item.value || index}

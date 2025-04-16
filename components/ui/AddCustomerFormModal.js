@@ -39,6 +39,7 @@ const AddCustomerFormModal = (props) => {
 			email: formData?.email || null,
 			address: formData?.address || null,
 			created_by: user?.data?.user?.id,
+			customer_type: formData?.customer_type,
 		};
 		try {
 			const { error } = await POST__addCustomer(payload);

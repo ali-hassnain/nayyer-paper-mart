@@ -85,3 +85,26 @@
 .sticky.bottom {
 	z-index: 100; /* Lower than datepicker's z-index */
 }
+
+@media print {
+	.print-hide {
+		display: none !important;
+	}
+
+	.print-header {
+		display: block !important;
+		text-align: center;
+		margin-bottom: 20px;
+	}
+
+	.print-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.print-table th,
+	.print-table td {
+		padding: 4px;
+		border: 1px solid #ddd;
+	}
+}

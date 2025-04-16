@@ -35,7 +35,7 @@ const TableWrapper = ({
 					<TableRow
 						key={rowIndex}
 						onClick={() => onRowClick?.(row)}
-						className={rowClassName}
+						className={rowClassName ? rowClassName(row) : ""}
 					>
 						{columns.map((col, colIndex) => (
 							<TableCell key={colIndex} className={col.className}>

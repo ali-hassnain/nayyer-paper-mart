@@ -24,51 +24,91 @@ const CreateOrderForm = () => {
 		formState: { errors, isValid },
 		watch,
 		trigger,
+		setValue,
 	} = useForm({ mode: "onChange", reValidateMode: "onChange" });
 
 	const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 	const [formMessage, setFormMessage] = useState(null);
 	const [payloadPosting, setPayloadPosting] = useState(false);
+	const [cacheBuster, setCacheBuster] = useState(Date.now());
+
 	const { loadOptions, updatePage } = usePaginatedOptions();
 	const router = useRouter();
 	const supabase = createClient();
 
-	const customerLoader = useCallback(
-		(search, _, { page } = {}) => loadOptions("customers", search),
-		[loadOptions]
-	);
-
-	const partnerLoader = useCallback(
-		(search, _, { page } = {}) => loadOptions("partners", search),
-		[loadOptions]
-	);
-
-	const [partner, partnerShare] = watch(["partner", "partner_share"]);
+	const [partner, partnerShare, orderType] = watch([
+		"partner",
+		"partner_share",
+		"order_type",
+	]);
 
 	useEffect(() => {
-		trigger("partner");
-		trigger("partner_share");
-	}, [partner, partnerShare, trigger]);
+		setValue("customer", null);
+		setCacheBuster(Date.now()); // Force complete reload
+	}, [orderType, setValue]);
 
-	const validatePartner = (value) => {
-		if (partnerShare && !value?.value) {
-			return "Partner required when share is entered";
-		}
-		return true;
-	};
+	const customerLoader = useCallback(
+		async (search, _, { page } = {}) => {
+			if (!orderType) return { options: [] };
 
-	const validatePartnerShare = (value) => {
-		if (partner?.value && !value) {
-			return "Partner share is required when partner is selected";
-		}
-		if (value && !partner?.value) {
-			return "Cannot have partner share without selecting a partner";
-		}
-		if (partner?.value && (value < 0 || value > 100)) {
-			return "Partner share must be between 0-100%";
-		}
-		return true;
-	};
+			try {
+				const { options, hasMore } = await loadOptions("customers", {
+					searchQuery: search,
+					filter: {
+						column: "customer_type",
+						value: orderType === "sale" ? "buyer" : "supplier",
+						cacheKey: cacheBuster, // Pass cache buster to query
+					},
+				});
+
+				return {
+					options,
+					hasMore,
+					// Cache busting at response level
+					_cacheKey: cacheBuster,
+				};
+			} catch (error) {
+				console.error("Customer load error:", error);
+				return { options: [] };
+			}
+		},
+		[loadOptions, orderType, cacheBuster]
+	);
+
+	// const partnerLoader = useCallback(
+	// 	(search, _, { page } = {}) => loadOptions("partners", search),
+	// 	[loadOptions]
+	// );
+
+	// const partnerLoader = useCallback(
+	// 	(search, _, { page } = {}) => loadOptions("partners", search),
+	// 	[loadOptions]
+	// );
+
+	// useEffect(() => {
+	// 	trigger("partner");
+	// 	trigger("partner_share");
+	// }, [partner, partnerShare, trigger]);
+
+	// const validatePartner = (value) => {
+	// 	if (partnerShare && !value?.value) {
+	// 		return "Partner required when share is entered";
+	// 	}
+	// 	return true;
+	// };
+	//
+	// const validatePartnerShare = (value) => {
+	// 	if (partner?.value && !value) {
+	// 		return "Partner share is required when partner is selected";
+	// 	}
+	// 	if (value && !partner?.value) {
+	// 		return "Cannot have partner share without selecting a partner";
+	// 	}
+	// 	if (partner?.value && (value < 0 || value > 100)) {
+	// 		return "Partner share must be between 0-100%";
+	// 	}
+	// 	return true;
+	// };
 
 	const formSchema = useMemo(
 		() => [
@@ -132,6 +172,13 @@ const CreateOrderForm = () => {
 				placeholder: "Enter quantity",
 			},
 			{
+				name: "labour_cost",
+				label: "Labour",
+				type: "number",
+				width: "half",
+				placeholder: "Enter Labour Cost",
+			},
+			{
 				name: "paper_type",
 				label: "Paper Type",
 				type: "select",
@@ -147,10 +194,32 @@ const CreateOrderForm = () => {
 				label: "Customer",
 				type: "async-paginate",
 				width: "full",
+				key: `customer-${orderType}-${cacheBuster}`, // Composite key
 				required: { value: true, message: "Customer is required" },
 				loadOptions: customerLoader,
-				additional: { page: 1 },
+				additional: {
+					page: 1,
+					orderType: watch("order_type"),
+				},
 				handlePagination: () => updatePage("customers"),
+				validate: (value) => (!orderType ? "Select order type first" : true),
+				isDisabled: !orderType,
+				noOptionsMessage: ({ inputValue }) =>
+					!orderType
+						? "Select order type first"
+						: inputValue
+						? "No customers found"
+						: "Type to search...",
+				// AsyncPaginate specific cache control
+				cacheUniq: cacheBuster,
+				cacheOptions: false,
+				debounceTimeout: 300,
+				onMenuOpen: () => {
+					// Force fresh load on menu open
+					if (!watch("customer")) {
+						setCacheBuster(Date.now());
+					}
+				},
 			},
 			{
 				name: "order_date",
@@ -163,39 +232,62 @@ const CreateOrderForm = () => {
 					const selectedDate = new Date(value);
 					const now = new Date();
 					return selectedDate <= now || "Payment date cannot be in the future";
-				}
+				},
 			},
-			{
-				name: "partner",
-				label: "Partner",
-				type: "async-paginate",
-				width: "full",
-				required: false,
-				loadOptions: partnerLoader,
-				additional: { page: 1 },
-				handlePagination: () => updatePage("partners"),
-				validate: validatePartner,
-			},
-			{
-				name: "partner_share",
-				label: "Partner Share (%)",
-				type: "number",
-				width: "half",
-				required: false,
-				placeholder: "Enter partner share",
-				validate: validatePartnerShare,
-				min: { value: 0, message: "Must be at least 0%" },
-				max: { value: 100, message: "Cannot exceed 100%" },
-				disabled: !partner?.value,
-			},
+			// {
+			// 	name: "partner",
+			// 	label: "Partner",
+			// 	type: "async-paginate",
+			// 	width: "full",
+			// 	required: false,
+			// 	loadOptions: partnerLoader,
+			// 	additional: { page: 1 },
+			// 	handlePagination: () => updatePage("partners"),
+			// 	validate: validatePartner,
+			// },
+			// {
+			// 	name: "partner_share",
+			// 	label: "Partner Share (%)",
+			// 	type: "number",
+			// 	width: "half",
+			// 	required: false,
+			// 	placeholder: "Enter partner share",
+			// 	validate: validatePartnerShare,
+			// 	min: { value: 0, message: "Must be at least 0%" },
+			// 	max: { value: 100, message: "Cannot exceed 100%" },
+			// 	disabled: !partner?.value,
+			// },
 		],
-		[partner]
+		[
+			customerLoader,
+			orderType,
+			updatePage,
+			cacheBuster,
+			watch,
+			// partner
+		]
 	);
+
+	useEffect(() => {
+		if (orderType) {
+			setValue("customer", null);
+		}
+	}, [orderType, setValue]);
 
 	const onSubmit = async (formData) => {
 		setPayloadPosting(true);
 		setFormMessage(null);
 		try {
+			const calculatedBalances = calculateBalances({
+				length: formData.length,
+				width: formData.width,
+				weight_per_sheet: formData.weight_per_sheet,
+				rate: formData.rate,
+				quantity: formData.quantity,
+				paper_type: formData.paper_type,
+				partnerShare: formData.partner_share,
+				labour_cost: formData.labour_cost,
+			});
 			const payload = {
 				created_by: user?.data?.user?.id,
 				product_name: formData.product_name,
@@ -210,43 +302,12 @@ const CreateOrderForm = () => {
 				partner_share: formData.partner?.value ? formData.partner_share : null,
 				paper_type: formData.paper_type,
 				status: orderStatus.PENDING,
-				total_bill: calculateBalances({
-					length: formData.length,
-					width: formData.width,
-					weight_per_sheet: formData.weight_per_sheet,
-					rate: formData.rate,
-					quantity: formData.quantity,
-					paper_type: formData.paper_type,
-					partnerShare: formData.partner_share,
-				}).totalBalance,
-				total_balance: calculateBalances({
-					length: formData.length,
-					width: formData.width,
-					weight_per_sheet: formData.weight_per_sheet,
-					rate: formData.rate,
-					quantity: formData.quantity,
-					paper_type: formData.paper_type,
-					partnerShare: formData.partner_share,
-				}).totalBalance,
-				partner_balance: calculateBalances({
-					length: formData.length,
-					width: formData.width,
-					weight_per_sheet: formData.weight_per_sheet,
-					rate: formData.rate,
-					quantity: formData.quantity,
-					paper_type: formData.paper_type,
-					partnerShare: formData.partner_share,
-				}).partnerBalance,
-				user_balance: calculateBalances({
-					length: formData.length,
-					width: formData.width,
-					weight_per_sheet: formData.weight_per_sheet,
-					rate: formData.rate,
-					quantity: formData.quantity,
-					paper_type: formData.paper_type,
-					partnerShare: formData.partner_share,
-				}).userBalance,
-				order_date:formData.order_date
+				total_bill: calculatedBalances.totalBalance,
+				total_balance: calculatedBalances.totalBalance,
+				partner_balance: calculatedBalances.partnerBalance,
+				user_balance: calculatedBalances.userBalance,
+				order_date: formData.order_date,
+				labour_cost: formData.labour_cost,
 			};
 
 			const { data, error } = await supabase
@@ -255,6 +316,30 @@ const CreateOrderForm = () => {
 				.select();
 
 			if (error) throw error;
+
+			const { data: customerData, error: customerError } = await supabase
+				.from("customers")
+				.select("customer_balance, customer_labour_balance")
+				.eq("id", formData.customer.value)
+				.single();
+
+			if (customerError) throw customerError;
+
+			const newBalance =
+				(customerData.customer_balance ?? 0) + calculatedBalances.userBalance;
+			const newLabourBalance =
+				(customerData.customer_labour_balance ?? 0) + formData.labour_cost;
+
+			const { data: updateData, error: updateError } = await supabase
+				.from("customers")
+				.update({
+					customer_balance: newBalance,
+					customer_labour_balance: newLabourBalance,
+				})
+				.eq("id", formData.customer.value)
+				.select();
+
+			if (updateError) throw updateError;
 
 			setFormMessage({
 				type: "success",

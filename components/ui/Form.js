@@ -8,8 +8,7 @@ import { Controller } from "react-hook-form";
 import { AsyncPaginate } from "react-select-async-paginate";
 import FileUploader from "@/components/ui/FileUploader";
 import DatePicker from "react-datepicker";
-import 'react-datepicker/dist/react-datepicker.css';
-
+import "react-datepicker/dist/react-datepicker.css";
 
 const Form = ({
 	formFields,
@@ -127,7 +126,9 @@ const Form = ({
 																control={control}
 																defaultValue={defaultValue || new Date()}
 																rules={{
-																	required: required?.value ? required.message : false,
+																	required: required?.value
+																		? required.message
+																		: false,
 																	validate: elem.validate,
 																}}
 																render={({ field }) => (
@@ -135,17 +136,19 @@ const Form = ({
 																		selected={field.value || new Date()}
 																		onChange={(date) => field.onChange(date)}
 																		showTimeSelect
-																		timeFormat="HH:mm"
+																		timeFormat='HH:mm'
 																		timeIntervals={15}
-																		timeCaption="Time"
-																		dateFormat="MMMM d, yyyy h:mm aa"
+																		timeCaption='Time'
+																		dateFormat='MMMM d, yyyy h:mm aa'
 																		className={`c__form__input ${
-																			errors[name] ? `c__form__input--error` : ``
+																			errors[name]
+																				? `c__form__input--error`
+																				: ``
 																		}`}
 																		placeholderText={placeholder}
 																		maxDate={new Date()}
-																		popperClassName="react-datepicker-popper"
-																		wrapperClassName="date-picker-wrapper"
+																		popperClassName='react-datepicker-popper'
+																		wrapperClassName='date-picker-wrapper'
 																		disabled={disabled}
 																	/>
 																)}
@@ -160,26 +163,36 @@ const Form = ({
 																name={name}
 																type='number'
 																placeholder={placeholder}
-																step="any" // Allow any decimal values
+																step='any' // Allow any decimal values
 																inputMode={elem.inputMode || "decimal"}
 																pattern={elem.pattern || "^\\d+(\\.\\d{0,2})?$"} // Allow 0-2 decimals
 																defaultValue={defaultValue} // Remove .toFixed(2) to preserve original format
 																{...register(name, {
-																	required: required?.value ? required.message : false,
+																	required: required?.value
+																		? required.message
+																		: false,
 																	pattern: {
-																		value: new RegExp(elem.pattern || "^\\d+(\\.\\d{0,2})?$"),
-																		message: elem.pattern?.message || "Maximum 2 decimal places allowed",
+																		value: new RegExp(
+																			elem.pattern || "^\\d+(\\.\\d{0,2})?$"
+																		),
+																		message:
+																			elem.pattern?.message ||
+																			"Maximum 2 decimal places allowed",
 																	},
 																	validate: elem.validate,
 																	valueAsNumber: true,
-																	min: elem.min?.value ? {
-																		value: elem.min.value,
-																		message: elem.min.message,
-																	} : undefined,
-																	max: elem.max?.value ? {
-																		value: elem.max.value,
-																		message: elem.max.message,
-																	} : undefined,
+																	min: elem.min?.value
+																		? {
+																				value: elem.min.value,
+																				message: elem.min.message,
+																		  }
+																		: undefined,
+																	max: elem.max?.value
+																		? {
+																				value: elem.max.value,
+																				message: elem.max.message,
+																		  }
+																		: undefined,
 																})}
 																disabled={disabled}
 																onWheel={(e) => {
@@ -188,20 +201,49 @@ const Form = ({
 																}}
 																onKeyDown={(e) => {
 																	const allowedKeys = [
-																		"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-																		".", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"
+																		"0",
+																		"1",
+																		"2",
+																		"3",
+																		"4",
+																		"5",
+																		"6",
+																		"7",
+																		"8",
+																		"9",
+																		".",
+																		"Backspace",
+																		"Delete",
+																		"ArrowLeft",
+																		"ArrowRight",
+																		"Tab",
 																	];
 
-																	if (!allowedKeys.includes(e.key) && !e.metaKey) {
+																	if (
+																		!allowedKeys.includes(e.key) &&
+																		!e.metaKey
+																	) {
 																		e.preventDefault();
 																	}
 																	const currentValue = e.currentTarget.value;
-																	if (e.key === "." && currentValue.includes(".")) {
+																	if (
+																		e.key === "." &&
+																		currentValue.includes(".")
+																	) {
 																		e.preventDefault();
 																	}
 																	if (currentValue.includes(".")) {
-																		const decimalPart = currentValue.split(".")[1];
-																		if (decimalPart?.length >= 2 && !["Backspace", "Delete", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+																		const decimalPart =
+																			currentValue.split(".")[1];
+																		if (
+																			decimalPart?.length >= 2 &&
+																			![
+																				"Backspace",
+																				"Delete",
+																				"ArrowLeft",
+																				"ArrowRight",
+																			].includes(e.key)
+																		) {
 																			e.preventDefault();
 																		}
 																	}
@@ -340,7 +382,9 @@ const Form = ({
 																	<AsyncPaginate
 																		{...field}
 																		key={`${name}-${
-																			elem.additional?.parentId || "initial"
+																			elem.additional?.parentId ||
+																			elem.additional?.orderType ||
+																			"initial"
 																		}`}
 																		loadOptions={elem.loadOptions}
 																		additional={elem.additional}
@@ -366,6 +410,18 @@ const Form = ({
 																				...base,
 																				zIndex: 9999,
 																			}),
+																		}}
+																		defaultOptions={[]} // Start empty
+																		cacheOptions={elem.cacheOptions} // Disable internal caching
+																		debounceTimeout={300}
+																		onMenuOpen={() => {
+																			// Trigger load when menu opens
+																			if (
+																				elem.loadOptions &&
+																				!field.inputValue
+																			) {
+																				elem.loadOptions("");
+																			}
 																		}}
 																	/>
 																)}
