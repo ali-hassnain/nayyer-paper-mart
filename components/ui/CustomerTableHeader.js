@@ -50,7 +50,7 @@ const CustomerTableHeader = (props) => {
 						</p>
 
 						<div className='mt-1'>
-							{customer.customer_balance > 0 ? (
+							{customer?.customer_balance + customer?.previous_balance + customer?.customer_labour_balance > 0 ? (
 								<Badge className='bg-red-200 text-red-800 text-xs'>
 									Pending
 								</Badge>
