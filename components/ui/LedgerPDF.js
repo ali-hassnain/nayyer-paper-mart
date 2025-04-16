@@ -134,7 +134,7 @@ const LedgerPDF = ({ customer = {}, transactions = [] }) => {
 				<View style={styles.table}>
 					<View style={[styles.tableRow, styles.tableHeader]}>
 						<Text style={styles.dateCell}>Date</Text>
-						<Text style={styles.descCell}>Desc.</Text>
+						{/*<Text style={styles.descCell}>Desc.</Text>*/}
 						<Text style={styles.dimensionsCell}>Dimensions</Text>
 						<Text style={styles.qtyCell}>Qty</Text>
 						<Text style={styles.rateCell}>Rate</Text>
@@ -150,11 +150,11 @@ const LedgerPDF = ({ customer = {}, transactions = [] }) => {
 								? format(new Date(customer.created_at), "dd/MM/yyyy")
 								: "N/A"}
 						</Text>
-						<Text style={styles.descCell}>Previous</Text>
+						{/*<Text style={styles.descCell}>Previous</Text>*/}
 						<Text style={styles.dimensionsCell} />
 						<Text style={styles.qtyCell} />
 						<Text style={styles.rateCell} />
-						<Text style={styles.modeCell} />
+						<Text style={styles.modeCell} >Previous</Text>
 						<Text style={styles.debitCell} />
 						<Text style={styles.creditCell} />
 						<Text style={styles.balanceCell}>
@@ -179,9 +179,9 @@ const LedgerPDF = ({ customer = {}, transactions = [] }) => {
 										: ""}
 								</Text>
 
-								<Text style={styles.descCell}>
-									{transaction.type === "payment" ? transaction.payment_mode : ""}
-								</Text>
+								{/*<Text style={styles.descCell}>*/}
+								{/*	{transaction.type === "payment" ? transaction.payment_mode : ""}*/}
+								{/*</Text>*/}
 
 								<Text style={styles.dimensionsCell}>
 									{transactionType === "order"
