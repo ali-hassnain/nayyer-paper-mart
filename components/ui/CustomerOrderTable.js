@@ -117,20 +117,16 @@ const CustomerOrderTable = ({
 
 	const orderColumns = [
 		{
-			header: "Order Date",
-			accessor: "order_date",
-			render: (value, row) =>
-				format(new Date(value || row.payment_date), "PPpp"),
-		},
-		{
 			header: "Item",
 			render: (_, row) =>
 				row.type === "order" ? `${row.length}×${row.width}/${row.weight}` : "",
+			className: "min-w-[100px] whitespace-nowrap",
 		},
 		{
 			header: "Product",
 			accessor: "product_name",
 			render: (value, row) => (row.type === "order" ? value : ""),
+			className: "min-w-[100px] whitespace-nowrap",
 		},
 		{
 			header: "Weight/ream",
@@ -170,11 +166,12 @@ const CustomerOrderTable = ({
 		{
 			header: "Debit/Credit",
 			accessor: "total_bill",
+			className: "min-w-[120px] whitespace-nowrap",
 			render: (value, row) =>
 				row.type === "order" ? (
 					`PKR ${value?.toLocaleString("en-PK", {
-						minimumFractionDigits: 2,
-						maximumFractionDigits: 2,
+						minimumFractionDigits: 0,
+						maximumFractionDigits: 0,
 					})}`
 				) : (
 					<div>
@@ -196,7 +193,44 @@ const CustomerOrderTable = ({
 			render: (value, row) =>
 				row.type === "order" && !!value ? `PKR ${value}` : "",
 		},
-
+		{
+			header: "Type",
+			accessor: "order_type",
+			className: "min-w-[100px] whitespace-nowrap",
+			render: (value, row) =>
+				row.type === "order" ? (
+					<Badge variant='outline' className='bg-blue-100'>
+						{value.toUpperCase()}
+					</Badge>
+				) : (
+					<Badge
+						variant='outline'
+						className={
+							row.customer.customer_type === customerType.BUYER
+								? `bg-green-300`
+								: "bg-red-300"
+						}
+					>
+						{row.customer.customer_type === customerType.BUYER
+							? "RECEIVED"
+							: "PAYMENT SENT"}
+					</Badge>
+				),
+		},
+		{
+			header: "Payment Mode",
+			render: (_, row) =>
+				row.type === "payment"
+					? removeUnderscores(row.payment_mode?.toUpperCase()) || ""
+					: "",
+		},
+		{
+			header: "Date",
+			accessor: "order_date",
+			className: "min-w-[180px] whitespace-nowrap",
+			render: (value, row) =>
+				format(new Date(value || row.payment_date), "PPpp"),
+		},
 		// {
 		// 	header: "Total Balance",
 		// 	accessor: "total_balance",
@@ -257,36 +291,6 @@ const CustomerOrderTable = ({
 		// 		);
 		// 	},
 		// },
-		{
-			header: "Type",
-			accessor: "order_type",
-			render: (value, row) =>
-				row.type === "order" ? (
-					<Badge variant='outline' className='bg-blue-100'>
-						{value.toUpperCase()}
-					</Badge>
-				) : (
-					<Badge
-						variant='outline'
-						className={
-							row.customer.customer_type === customerType.BUYER
-								? `bg-green-300`
-								: "bg-red-300"
-						}
-					>
-						{row.customer.customer_type === customerType.BUYER
-							? "RECEIVED"
-							: "PAYMENT SENT"}
-					</Badge>
-				),
-		},
-		{
-			header: "Payment Mode",
-			render: (_, row) =>
-				row.type === "payment"
-					? removeUnderscores(row.payment_mode?.toUpperCase()) || ""
-					: "",
-		},
 	];
 
 	const accordionItems = useMemo(() => {
